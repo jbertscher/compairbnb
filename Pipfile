@@ -13,6 +13,7 @@ google-auth-oauthlib = "*"
 gspread = "*"
 typing = "*"
 flask = "*"
+flask-table = "*"
 
 [dev-packages]
 
