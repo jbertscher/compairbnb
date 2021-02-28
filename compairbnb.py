@@ -64,7 +64,7 @@ def combine_listings(listings: list[str]):
 
 def combine_all_listings(listings_dir: str):
     all_listings_parsed = []
-    for listing_file in glob.glob(f'{listings_dir}/*'):
+    for listing_file in glob.glob(f'{listings_dir}/*.json'):
         listing = get_listing_from_file(listing_file)
         listing_parsed = parse_json(listing)
         listing_parsed = pd.DataFrame(listing_parsed, index=[listing_parsed['id']])

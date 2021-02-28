@@ -13,12 +13,12 @@ def submit_url():
 def api():
     # GET request
     if request.method == 'GET':
-        response = combine_all_listings(LISTINGS_DIR).to_json()
+        response = combine_all_listings(LISTINGS_DIR).to_json(orient='records')
         return jsonify(response)  # serialize and use JSON headers
     # POST request
     if request.method == 'POST':
         print(request.get_json())  # parse as JSON
-        return 'Success', 200
+        return 'OK', 200
 
 @app.route('/')
 def home():
@@ -27,7 +27,6 @@ def home():
     all_listings_html = create_html_table(all_listings) 
 
     return render_template('home.html',
-        listings_data=all_listings.to_json,
         listings_table=all_listings_html, 
         titles=all_listings.columns.values)
 
