@@ -3,6 +3,7 @@ import airbnb
 from flask_table import Table, Col, create_table
 import glob
 import json
+import os
 import pandas as pd
 import pandas.io.formats.format as fmt
 
@@ -73,23 +74,21 @@ def combine_all_listings(listings_dir: str):
     all_listings_combined = combine_listings(all_listings_parsed)
     return all_listings_combined
 
-def create_html_table(df):
-    # class Results(Table):
-    #     cols = []
-    #     for col in df.columns.tolist():
-    #         new_col = Col(col)
-    #         cols.append(new_col)
 
-    df = df.reset_index()
-    df.columns = df.columns.astype('str')
-    items = df.to_dict(orient='records')
+def delete_listing(listing_id):
+    os.replace(f'{LISTINGS_DIR}/{listing_id}.json', f'{LISTINGS_DIR}/deleted/{listing_id}.json')
 
-    Results = create_table('Results')
-    for col in df.columns.tolist():
-        Results.add_column(col, Col(col))
+# def create_html_table(df):
+#     df = df.reset_index()
+#     df.columns = df.columns.astype('str')
+#     items = df.to_dict(orient='records')
 
-    results = Results(items)
-    return results
+#     Results = create_table('Results')
+#     for col in df.columns.tolist():
+#         Results.add_column(col, Col(col))
+
+#     results = Results(items)
+#     return results
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

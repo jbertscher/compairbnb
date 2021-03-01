@@ -35,7 +35,7 @@ fetch('/api')
                     // A JSON payload
                     body: JSON.stringify({
                         "action": "delete_listing",
-                        "listing": cell.getRow().getData().id
+                        "listing_id": cell.getRow().getData().id
                     })
                 }).then(function (response) { // At this point, Flask has printed our JSON
                     return response.text();
