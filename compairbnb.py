@@ -6,6 +6,7 @@ import json
 import os
 import pandas as pd
 import pandas.io.formats.format as fmt
+import re
 
 
 LISTINGS_DIR = 'saved_listings'
@@ -29,13 +30,14 @@ def parse_json(listing_json):
     # return pd.json_normalize(json_input['pdp_listing_detail']['listing_amenities'])
     pdp_listing_detail = listing_json['pdp_listing_detail']
 
+    p = re.compile('^([0-9]*)')
     listing_details = {
         'id': pdp_listing_detail['id'],
         'p3_summary_title': pdp_listing_detail['p3_summary_title'],
-        'bathroom_label': listing_json['pdp_listing_detail']['bathroom_label'],
-        'bed_label': listing_json['pdp_listing_detail']['bed_label'],
-        'bedroom_label': listing_json['pdp_listing_detail']['bedroom_label'],
-        'guest_label': listing_json['pdp_listing_detail']['guest_label'],
+        'bathroom_label': p.search(listing_json['pdp_listing_detail']['bathroom_label']).group(0),
+        'bed_label': p.search(listing_json['pdp_listing_detail']['bed_label']).group(0),
+        'bedroom_label': p.search(listing_json['pdp_listing_detail']['bedroom_label']).group(0),
+        'guest_label': p.search(listing_json['pdp_listing_detail']['guest_label']).group(0),
         'p3_summary_title': listing_json['pdp_listing_detail']['p3_summary_title'],
         'p3_summary_address': listing_json['pdp_listing_detail']['p3_summary_address']
     }

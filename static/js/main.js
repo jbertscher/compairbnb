@@ -13,8 +13,17 @@ fetch('/api')
         var table = new Tabulator("#listings-table", {
             height:205, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
             data:JSON.parse(tabledata), //assign data to table
-            layout:"fitColumns", //fit columns to width of table (optional)
-            autoColumns:true
+            layout:"fitColumns", //fit columns to width of table (optional),
+            columns:[ //Define Table Columns
+                {title:"ID", field:"id"},
+                {title:"Title", field:"p3_summary_title"},
+                {title:"Bathrooms", field:"bathroom_label"},
+                {title:"Beds", field:"bed_label"},
+                {title:"Bedrooms", field:"bedroom_label"},
+                {title:"Guests", field:"guest_label"},
+                {title:"Location", field:"p3_summary_address"}
+            ]
+            // autoColumns:true
         });
 
         table.addColumn({
