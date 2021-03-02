@@ -14,6 +14,7 @@ gspread = "*"
 typing = "*"
 flask = "*"
 flask-table = "*"
+gunicorn = "*"
 
 [dev-packages]
 

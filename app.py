@@ -34,4 +34,5 @@ def home():
     #     listings_table=all_listings_html, 
     #     titles=all_listings.columns.values)
 
-print('http://127.0.0.1:5000/')
+if __name__=='__main__':
+    app.run()
