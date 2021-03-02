@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+#lib/
 lib64/
 parts/
 sdist/
@@ -130,6 +130,5 @@ dmypy.json
 
 # Project-specific files and dirs
 saved_listings/*
-saved_listings/deleted
 !saved_listings/.gitkeep 
 !saved_listings/deleted/.gitkeep 
