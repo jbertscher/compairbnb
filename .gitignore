@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # Project-specific files and dirs
-saved_listings/
+saved_listings/.*
