@@ -1,12 +1,12 @@
 import argparse
 import airbnb
-from flask_table import Table, Col, create_table
 import glob
 import json
 import os
 import pandas as pd
 import pandas.io.formats.format as fmt
 import re
+import requests
 
 
 LISTINGS_DIR = 'saved_listings'
@@ -15,15 +15,19 @@ api = airbnb.Api(randomize=True)
 
 
 def extract_listing_id(url):
-    import re
-    listing_id = re.search('www.airbnb.com/rooms/(.*)\?', url).group(1)
-    return listing_id
+    if url:
+        re_groups = re.search('www.airbnb.com/rooms/(.*)\?', url)
+        if re_groups:
+            listing_id = re_groups.group(1)
+            return listing_id
 
 
 def read_listing(listing_id):
-    # Writes to string
-    # return json.dumps(api.get_listing_details(listing_id))
-    return api.get_listing_details(listing_id)
+    try:
+        listing_details = api.get_listing_details(listing_id)
+        return listing_details
+    except requests.exceptions.HTTPError as error:
+        print (error)
 
 
 def parse_json(listing_json):
@@ -50,9 +54,12 @@ def write_listing_from_url(url):
     
     # Get listing json and write
     listing = read_listing(listing_id)
-    with open(f'{LISTINGS_DIR}/{listing_id}.json', 'w') as file:
-        json.dump(listing, file)
-
+    if listing:
+        with open(f'{LISTINGS_DIR}/{listing_id}.json', 'w') as file:
+            json.dump(listing, file)
+            return 0
+    return 1
+    
 
 def get_listing_from_file(file_name):
     with open(f'{file_name}', 'r') as file:
@@ -65,32 +72,23 @@ def combine_listings(listings: list[str]):
     return pd.concat(listings, axis=0)
 
 
-def combine_all_listings(listings_dir: str):
-    all_listings_parsed = []
-    for listing_file in glob.glob(f'{listings_dir}/*.json'):
-        listing = get_listing_from_file(listing_file)
-        listing_parsed = parse_json(listing)
-        listing_parsed = pd.DataFrame(listing_parsed, index=[listing_parsed['id']])
-        all_listings_parsed.append(listing_parsed)
+def combine_all_listings(listings_dir: str) -> list:
+    if len(glob.glob1(listings_dir, '*.json')) > 0:
+        all_listings_parsed = []
+        for listing_file in glob.glob(f'{listings_dir}/*.json'):
+            listing = get_listing_from_file(listing_file)
+            listing_parsed = parse_json(listing)
+            listing_parsed = pd.DataFrame(listing_parsed, index=[listing_parsed['id']])
+            all_listings_parsed.append(listing_parsed)
 
-    all_listings_combined = combine_listings(all_listings_parsed)
-    return all_listings_combined
+        return combine_listings(all_listings_parsed)
+    else:
+        return pd.DataFrame()
 
 
 def delete_listing(listing_id):
     os.replace(f'{LISTINGS_DIR}/{listing_id}.json', f'{LISTINGS_DIR}/deleted/{listing_id}.json')
-
-# def create_html_table(df):
-#     df = df.reset_index()
-#     df.columns = df.columns.astype('str')
-#     items = df.to_dict(orient='records')
-
-#     Results = create_table('Results')
-#     for col in df.columns.tolist():
-#         Results.add_column(col, Col(col))
-
-#     results = Results(items)
-#     return results
+    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
