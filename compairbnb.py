@@ -69,13 +69,16 @@ def get_listing_from_file(file_name):
     return listing
 
 
-def combine_listings(listings: list[str]):
-    return pd.concat(listings, axis=0)
+def combine_listings(listings: list[str]) -> pd.DataFrame:
+    if len(listings)>0:
+        return pd.concat(listings, axis=0)
+    else:
+        return pd.DataFrame()
 
 
 def combine_all_listings() -> list:
     all_listings = db['listings'].find()
-    if all_listings:
+    if all_listings.count()>0:
         all_listings_parsed = []
         
         for listing in all_listings:
