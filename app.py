@@ -18,7 +18,7 @@ def submit_url():
 def api():
     # GET request
     if request.method == 'GET':
-        response = combine_all_listings(LISTINGS_DIR).to_json(orient='records')
+        response = combine_all_listings().to_json(orient='records')
         return jsonify(response)  # serialize and use JSON headers
     # POST request
     if request.method == 'POST':
@@ -30,7 +30,7 @@ def api():
 
 @app.route('/')
 def home():
-    all_listings = combine_all_listings(LISTINGS_DIR)
+    all_listings = combine_all_listings()
     return render_template('home.html')
 
 

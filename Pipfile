@@ -15,6 +15,9 @@ typing = "*"
 flask = "*"
 flask-table = "*"
 gunicorn = "*"
+pymongo = {extras = ["srv"], version = "*"}
+mongo = {extras = ["srv"], version = "*"}
+dnspython = "*"
 
 [dev-packages]
 

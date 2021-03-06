@@ -2,14 +2,16 @@ import argparse
 import airbnb
 import glob
 import json
+from pymongo import MongoClient
 import os
 import pandas as pd
 import pandas.io.formats.format as fmt
 import re
 import requests
 
-
-LISTINGS_DIR = 'saved_listings'
+mongodb_uri = os.environ['MONGODB_URI']
+client = MongoClient(mongodb_uri)
+db=client['compairbnb']
 
 api = airbnb.Api(randomize=True)
 
@@ -31,7 +33,6 @@ def read_listing(listing_id):
 
 
 def parse_json(listing_json):
-    # return pd.json_normalize(json_input['pdp_listing_detail']['listing_amenities'])
     pdp_listing_detail = listing_json['pdp_listing_detail']
 
     p = re.compile('^([0-9]*)')
@@ -55,10 +56,10 @@ def write_listing_from_url(url):
     # Get listing json and write
     listing = read_listing(listing_id)
     if listing:
-        with open(f'{LISTINGS_DIR}/{listing_id}.json', 'w') as file:
-            json.dump(listing, file)
-            return 0
-    return 1
+        result = db['listings'].insert_one(listing)
+        return result
+    else:
+        return 1
     
 
 def get_listing_from_file(file_name):
@@ -72,11 +73,12 @@ def combine_listings(listings: list[str]):
     return pd.concat(listings, axis=0)
 
 
-def combine_all_listings(listings_dir: str) -> list:
-    if len(glob.glob1(listings_dir, '*.json')) > 0:
+def combine_all_listings() -> list:
+    all_listings = db['listings'].find()
+    if all_listings:
         all_listings_parsed = []
-        for listing_file in glob.glob(f'{listings_dir}/*.json'):
-            listing = get_listing_from_file(listing_file)
+        
+        for listing in all_listings:
             listing_parsed = parse_json(listing)
             listing_parsed = pd.DataFrame(listing_parsed, index=[listing_parsed['id']])
             all_listings_parsed.append(listing_parsed)
@@ -87,7 +89,7 @@ def combine_all_listings(listings_dir: str) -> list:
 
 
 def delete_listing(listing_id):
-    os.replace(f'{LISTINGS_DIR}/{listing_id}.json', f'{LISTINGS_DIR}/deleted/{listing_id}.json')
+    db['listings'].delete_one({'pdp_listing_detail.id': 45797974})
     
 
 if __name__ == '__main__':
@@ -103,7 +105,7 @@ if __name__ == '__main__':
         write_listing_from_url(url)
         print('Listing added!')
     elif command=='get':
-        print(combine_all_listings(LISTINGS_DIR))
+        print(combine_all_listings())
 
 
 
