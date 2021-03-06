@@ -89,7 +89,7 @@ def combine_all_listings() -> list:
 
 
 def delete_listing(listing_id):
-    db['listings'].delete_one({'pdp_listing_detail.id': 45797974})
+    db['listings'].delete_one({'pdp_listing_detail.id': listing_id})
     
 
 if __name__ == '__main__':
