@@ -15,6 +15,10 @@ fetch('/api')
             data:JSON.parse(tabledata), //assign data to table
             layout:"fitColumns", //fit columns to width of table (optional),
             columns:[ //Define Table Columns
+                {title:"Image", field:"image", formatter:"image", formatterParams:{
+                    height:"200px",
+                    width:"200px"
+                }},
                 {title:"ID", field:"id"},
                 {title:"Title", field:"p3_summary_title"},
                 {title:"Bathrooms", field:"bathroom_label"},

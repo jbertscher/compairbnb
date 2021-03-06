@@ -37,6 +37,7 @@ def parse_json(listing_json):
 
     p = re.compile('^([0-9]*)')
     listing_details = {
+        'image': pdp_listing_detail['photos'][0]['large'],
         'id': pdp_listing_detail['id'],
         'p3_summary_title': pdp_listing_detail['p3_summary_title'],
         'bathroom_label': p.search(listing_json['pdp_listing_detail']['bathroom_label']).group(0),
