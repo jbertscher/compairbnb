@@ -11,17 +11,23 @@ fetch('/api')
 
         //create Tabulator on DOM element with id "example-table"
         var table = new Tabulator("#listings-table", {
-            height:205, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+            minHeight:220, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
             data:JSON.parse(tabledata), //assign data to table
             layout:"fitColumns", //fit columns to width of table (optional),
             columns:[ //Define Table Columns
-                {title:"ID", field:"id"},
-                {title:"Title", field:"p3_summary_title"},
-                {title:"Bathrooms", field:"bathroom_label"},
-                {title:"Beds", field:"bed_label"},
+                {title:"Click image to visit URL", field:"image", formatter:"image", width:235, formatterParams:{
+                    width:"225px",
+                    height:"150px"
+                }, cellClick:function(e, cell) {
+                    var win = window.open(cell.getRow().getData().url, '_blank');
+                    win.focus();
+                }},
+                {title:"Title", field:"p3_summary_title", formatter:"textarea"},
                 {title:"Bedrooms", field:"bedroom_label"},
+                {title:"Beds", field:"bed_label"},
+                {title:"Bathrooms", field:"bathroom_label"},
                 {title:"Guests", field:"guest_label"},
-                {title:"Location", field:"p3_summary_address"}
+                {title:"Location", field:"p3_summary_address", formatter:"textarea"}
             ]
             // autoColumns:true
         });

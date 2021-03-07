@@ -34,10 +34,16 @@ def read_listing(listing_id):
 
 def parse_json(listing_json):
     pdp_listing_detail = listing_json['pdp_listing_detail']
+    try:
+        url = listing_json['url']
+    except KeyError:
+        url = ''
 
     p = re.compile('^([0-9]*)')
     listing_details = {
         'id': pdp_listing_detail['id'],
+        'image': pdp_listing_detail['photos'][0]['large'],
+        'url': url,
         'p3_summary_title': pdp_listing_detail['p3_summary_title'],
         'bathroom_label': p.search(listing_json['pdp_listing_detail']['bathroom_label']).group(0),
         'bed_label': p.search(listing_json['pdp_listing_detail']['bed_label']).group(0),
@@ -56,6 +62,7 @@ def write_listing_from_url(url):
     # Get listing json and write
     listing = read_listing(listing_id)
     if listing:
+        listing['url'] = url[:url.find('?')]  # Strip query parameters
         result = db['listings'].insert_one(listing)
         return result
     else:
