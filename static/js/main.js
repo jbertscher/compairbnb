@@ -9,10 +9,27 @@ fetch('/api')
         console.log('Table data:');
         console.log(tabledata); 
 
+        tabledata_parsed = JSON.parse(tabledata);
+        var bed_types = [];
+        var bed_type_cols = [];
+        for(var i=0; i<tabledata_parsed.length; i++) {
+            Object.keys(JSON.parse(tabledata_parsed[i].num_bed_types)).forEach(bed_type => {
+                if (!bed_types.includes(bed_type)) {
+                    bed_types.push(bed_type)
+                    bed_type_cols.push({'title': bed_type,'field': 'num_bed_types.' + bed_type});
+                }
+            });
+            if(tabledata_parsed[i].num_bed_types == '{}') {
+                tabledata_parsed[i].num_bed_types = null;
+            };
+            tabledata_parsed[i].num_bed_types = JSON.parse(tabledata_parsed[i].num_bed_types)
+        };
+        // console.log(tabledata_parsed)
+
         //create Tabulator on DOM element with id "example-table"
         var table = new Tabulator("#listings-table", {
             minHeight:220, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
-            data:JSON.parse(tabledata), //assign data to table
+            data:tabledata_parsed, //assign data to table
             layout:"fitColumns", //fit columns to width of table (optional),
             columns:[ //Define Table Columns
                 {title:"Click image to visit URL", field:"image", formatter:"image", width:235, formatterParams:{
@@ -24,7 +41,10 @@ fetch('/api')
                 }},
                 {title:"Title", field:"p3_summary_title", formatter:"textarea"},
                 {title:"Bedrooms", field:"bedroom_label"},
-                {title:"Beds", field:"bed_label"},
+                {
+                    title:"Beds", 
+                    columns: bed_type_cols
+                },
                 {title:"Bathrooms", field:"bathroom_label"},
                 {title:"Guests", field:"guest_label"},
                 {title:"Location", field:"p3_summary_address", formatter:"textarea"}
