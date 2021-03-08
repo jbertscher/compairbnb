@@ -38,10 +38,6 @@ def parse_beds(listing_json):
     if len(rooms) > 0:
         for room in rooms:
             for bed in room['beds']:
-<<<<<<< HEAD
-=======
-                # bed_type = room['beds'][0]['type']
->>>>>>> 877f22934c773dd625b66f228f47cc3aa34da5bb
                 bed_type = bed['type']
                 bed_quantity = num_bed_types.get(bed_type, 0) + bed['quantity']
                 num_bed_types[bed_type] = bed_quantity
