@@ -1,0 +1,26 @@
+[
+    {
+        "id": 45797974,
+        "image": "https:\/\/a0.muscache.com\/im\/pictures\/7d5fd2fd-4a05-4637-b2d5-d73644096f54.jpg?aki_policy=large",
+        "url": "https:\/\/www.airbnb.com\/rooms\/45797974",
+        "p3_summary_title": "Sophisticated Holiday Home in Bocholt with Fenced Garden",
+        "bathroom_label": "2",
+        "bed_label": "5",
+        "bedroom_label": "3",
+        "guest_label": "10",
+        "num_bed_types": "null",
+        "p3_summary_address": "Bocholt, Vlaanderen, Belgium"
+    },
+    {
+        "id": 7609356,
+        "image": "https:\/\/a0.muscache.com\/im\/pictures\/62ac8b44-2109-4272-9a15-7605d77c3017.jpg?aki_policy=large",
+        "url": "https:\/\/www.airbnb.com\/rooms\/7609356",
+        "p3_summary_title": "Detached house \"Het Uitzicht\"",
+        "bathroom_label": "2",
+        "bed_label": "14",
+        "bedroom_label": "6",
+        "guest_label": "14",
+        "num_bed_types": "{\"single_bed\": 2, \"double_bed\": 1}",
+        "p3_summary_address": "Leende, Noord-Brabant, Netherlands"
+    }
+]
