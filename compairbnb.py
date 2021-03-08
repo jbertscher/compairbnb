@@ -32,12 +32,27 @@ def read_listing(listing_id):
         print (error)
 
 
+def parse_beds(listing_json):
+    rooms = listing_json['pdp_listing_detail']['listing_rooms']
+    num_bed_types = {}
+    if len(rooms) > 0:
+        for room in rooms:
+            for bed in room['beds']:
+                # bed_type = room['beds'][0]['type']
+                bed_type = bed['type']
+                bed_quantity = num_bed_types.get(bed_type, 0) + bed['quantity']
+                num_bed_types[bed_type] = bed_quantity
+    return num_bed_types
+
+
 def parse_json(listing_json):
     pdp_listing_detail = listing_json['pdp_listing_detail']
     try:
         url = listing_json['url']
     except KeyError:
         url = ''
+
+    num_bed_types = json.dumps(parse_beds(listing_json))
 
     p = re.compile('^([0-9]*)')
     listing_details = {
@@ -49,6 +64,7 @@ def parse_json(listing_json):
         'bed_label': p.search(listing_json['pdp_listing_detail']['bed_label']).group(0),
         'bedroom_label': p.search(listing_json['pdp_listing_detail']['bedroom_label']).group(0),
         'guest_label': p.search(listing_json['pdp_listing_detail']['guest_label']).group(0),
+        'num_bed_types': num_bed_types,
         'p3_summary_title': listing_json['pdp_listing_detail']['p3_summary_title'],
         'p3_summary_address': listing_json['pdp_listing_detail']['p3_summary_address']
     }
@@ -105,17 +121,23 @@ def delete_listing(listing_id):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('command')
-    parser.add_argument('--url')
+    parser.add_argument('--listing_id')
+    parser.add_argument('--filename')
     args = parser.parse_args()
     
     command = args.command
-    url = args.url
+    filename = args.filename
+    listing_id = args.listing_id
 
-    if command=='add':
-        write_listing_from_url(url)
-        print('Listing added!')
+    if command=='write_file':
+        with open(filename, 'w') as file:
+            listing = read_listing(listing_id)
+            json.dump(listing, file)
+        print(f'Listing written to {filename}!')
     elif command=='get':
         print(combine_all_listings())
+
+    # python compairbnb.py write_file --listing_id 7609356 --filename 7609356.json
 
 
 
