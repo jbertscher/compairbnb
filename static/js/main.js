@@ -1,6 +1,8 @@
 var tabledata;
 
-fetch('/api')
+console.log(trip_id)
+console.log('x')
+fetch('/api/' + trip_id)
     .then(function (response) {
         return response.json();
     }).then(function (json) {
@@ -57,7 +59,7 @@ fetch('/api')
             cellClick:function(e, cell) {
                 cell.getRow().delete();
                 // POST
-                fetch('/api', {
+                fetch('/api/' + trip_id, {
 
                     // Declare what type of data we're sending
                     headers: {

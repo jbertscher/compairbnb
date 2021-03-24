@@ -70,13 +70,14 @@ def parse_json(listing_json):
     return listing_details     
 
 
-def write_listing_from_url(url):
+def write_listing_from_url(url: str, trip_id: int) -> int:
     # Extract listing id from url
     listing_id = extract_listing_id(url)
     
     # Get listing json and write
     listing = read_listing(listing_id)
     if listing:
+        listing['trip_id'] = trip_id
         listing['url'] = url[:url.find('?')]  # Strip query parameters
         result = db['listings'].insert_one(listing)
         return result
@@ -84,7 +85,7 @@ def write_listing_from_url(url):
         return 1
     
 
-def get_listing_from_file(file_name):
+def get_listing_from_file(file_name: str):
     with open(f'{file_name}', 'r') as file:
         listing = file.read()
     listing = json.loads(listing)
@@ -98,9 +99,9 @@ def combine_listings(listings: list[str]) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def combine_all_listings() -> list:
-    all_listings = db['listings'].find()
-    if all_listings.count()>0:
+def combine_all_listings(trip_id: int) -> list:
+    all_listings = db['listings'].find({'trip_id': trip_id})
+    if all_listings.collection.count_documents({})>0:
         all_listings_parsed = []
         
         for listing in all_listings:
@@ -113,8 +114,8 @@ def combine_all_listings() -> list:
         return pd.DataFrame()
 
 
-def delete_listing(listing_id):
-    db['listings'].delete_one({'pdp_listing_detail.id': listing_id})
+def delete_listing(listing_id: int, trip_id: int) -> None:
+    db['listings'].delete_one({'trip_id': trip_id, 'pdp_listing_detail.id': listing_id})
     
 
 if __name__ == '__main__':
@@ -138,5 +139,9 @@ if __name__ == '__main__':
 
     # python compairbnb.py write_file --listing_id 7609356 --filename 7609356.json
 
+    # print(db['listings'].find()[0])
+    # print(combine_all_listings(123))
+    # write_listing_from_url('https://www.airbnb.com/rooms/29585414?federated_search_id=5167759d-28c9-4808-a841-9dd9034d162b&source_impression_id=p3_1616531404_0NAyCuUgacR16cW9', 123)
+    # db['listings'].delete_many({})
 
     
