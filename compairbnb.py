@@ -24,7 +24,7 @@ def extract_listing_id(url):
             return listing_id
 
 
-def read_listing(listing_id):
+def get_listing_json(listing_id):
     try:
         listing_details = api.get_listing_details(listing_id)
         return listing_details
@@ -75,7 +75,7 @@ def write_listing_from_url(url: str, trip_id: int) -> int:
     listing_id = extract_listing_id(url)
     
     # Get listing json and write
-    listing = read_listing(listing_id)
+    listing = get_listing_json(listing_id)
     if listing:
         listing['trip_id'] = trip_id
         listing['url'] = url[:url.find('?')]  # Strip query parameters
@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
     if command=='write_file':
         with open(filename, 'w') as file:
-            listing = read_listing(listing_id)
+            listing = get_listing_json(listing_id)
             json.dump(listing, file)
         print(f'Listing written to {filename}!')
     elif command=='get':
