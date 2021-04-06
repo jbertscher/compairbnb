@@ -1,7 +1,5 @@
 var tabledata;
 
-console.log(trip_id)
-console.log('x')
 fetch('/api/' + trip_id)
     .then(function (response) {
         return response.json();
