@@ -8,39 +8,57 @@ import re
 import requests
 
 # TODO:
-# 1. Figure out if want to be able to create instance of Listing only with id or with only url or both?
+# 1. Figure out if want to be able to create instance of Listing only with listing_id or with only url or both?
 
 class Listing:
     api = airbnb.Api(randomize=True)
 
-    def __init__(self, listing_id, trip_id, listing_url=None, listing_json=None, listing_details=None):
+    def __init__(self, listing_id: int, url: str, trip_id: str, listing_json: str = None, details: str = None):
+        assert isinstance(trip_id, str)
+        
         self.listing_id = listing_id
+        self.url = url
         self.trip_id = trip_id
-        self.listing_url = listing_url
         self.listing_json = listing_json
-        self.listing_details = listing_details
+        self.details = details
+
+    @classmethod
+    def create_from_id(cls, listing_id, trip_id):
+        url = f'https://www.airbnb.com/rooms/{listing_id}]'
+        return cls(listing_id, url, trip_id)
+
+    @classmethod
+    def create_from_url(cls, url, trip_id):
+        listing_id = cls.extract_id(url)
+        return cls(listing_id, url, trip_id)
+
+    @classmethod
+    def read_from_db(cls, listing_id, trip_id, db: Collection):
+        assert isinstance(trip_id, str)
+        
+        result = db['listings'].find_one({'pdp_listing_detail.id': listing_id, 'trip_id': trip_id})
+        return cls(result['pdp_listing_detail']['id'], result['url'], result['trip_id'])
 
     def get_and_parse_data(self):
-        self.listing_url()
-        self.listing_json = Listing.get_listing_json(self)
-        self.listing_details = Listing.parse_json(self)
+        self.listing_json = Listing.get_json(self)
+        self.details = Listing.parse_json(self)
 
-    def write_listing(self, db: Collection) -> int:
+    def write_to_db(self, db: Collection) -> int:
         # Get listing json and write
         listing_json = self.listing_json
         if listing_json:
             listing_json['trip_id'] = self.trip_id
-            listing_json['url'] = self.listing_url[:self.listing_url.find('?')]  # Strip query parameters
+            listing_json['url'] = self.url[:self.url.find('?')]  # Strip query parameters
             result = db['listings'].insert_one(listing_json)
             return result
         else:
             return 1
 
     @classmethod
-    def get_listing_json(cls, listing):
+    def get_json(cls, listing):
         try:
-            listing_details = cls.api.get_listing_details(listing.listing_id)
-            return listing_details
+            details = cls.api.get_listing_details(listing.listing_id)
+            return details
         except requests.exceptions.HTTPError as error:
             print (error)
             return None
@@ -56,8 +74,8 @@ class Listing:
         num_bed_types = json.dumps(cls.parse_beds(listing))
 
         p = re.compile('^([0-9]*)')
-        listing_details = {
-            'id': pdp_listing_detail['id'],
+        details = {
+            'listing_id': pdp_listing_detail['id'],
             'image': pdp_listing_detail['photos'][0]['large'],
             'url': url,
             'p3_summary_title': pdp_listing_detail['p3_summary_title'],
@@ -70,10 +88,10 @@ class Listing:
             'p3_summary_address': listing.listing_json['pdp_listing_detail']['p3_summary_address']
         }
 
-        return listing_details     
+        return details     
 
     @staticmethod
-    def extract_listing_id(url):
+    def extract_id(url):
         if url:
             re_groups = re.search('www.airbnb.com/rooms/(.*)\?', url)
             if re_groups:
@@ -94,11 +112,11 @@ class Listing:
 
     @staticmethod
     def write_listing_from_url(url: str, trip_id: int, db: Collection) -> int:
-        # Extract listing id from url
-        listing_id = Listing.extract_listing_id(url)
+        # Extract listing listing_id from url
+        listing_id = Listing.extract_id(url)
         
         # Get listing json and write
-        listing = Listing.get_listing_json(listing_id)
+        listing = Listing.get_json(listing_id)
         if listing:
             listing['trip_id'] = trip_id
             listing['url'] = url[:url.find('?')]  # Strip query parameters
@@ -108,13 +126,17 @@ class Listing:
             return 1
 
 if __name__=='__main__':
-    listing = Listing(4166953, 4)
+    # listing = Listing.create_from_id(4166953, '4')
+    listing = Listing.create_from_url('https://www.airbnb.com/rooms/45797974?source_impression_id=p3_1617906604_R7hqNuzB0UKlghw4', '4')
     listing.get_and_parse_data()
-    print(listing.listing_details)
 
     mongodb_uri = os.environ['MONGODB_URI']
     client = MongoClient(mongodb_uri)
     db=client['compairbnb']
-    listing.write_listing(db)
 
+    listing.write_to_db(db)
 
+    # print(Listing.read_from_db(34455224, '3', db))
+    found_listing = Listing.read_from_db(45797974, '4', db)
+    found_listing.get_and_parse_data()
+    print(found_listing.listing_json)
