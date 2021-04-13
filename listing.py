@@ -8,10 +8,10 @@ from pymongo.collection import Collection
 import re
 import requests
 
-# TODO:
-# + Removing listings from db
+# # TODO:
 # + How to properly write test functions in Python
 # + When to store in memory and when to read from db
+# + Stop reloading page after submitting URL
 
 class Listing:
     api = airbnb.Api(randomize=True)
@@ -28,7 +28,7 @@ class Listing:
         self.raw_listing_json = raw_listing_json
         self.properties = properties
 
-    def get_and_parse_data(self):
+    def populate_listing_properties(self):
         self.raw_listing_json = Listing.get_raw_json(self)
         self.properties = Listing.get_properties_from_raw_json(self)
 
@@ -102,6 +102,10 @@ class Listing:
         return properties     
 
     @staticmethod
+    def delete_listing(listing_id: int, trip_id: str, db: Collection) -> None:
+        db['listings'].delete_one({'trip_id': trip_id, 'listing_id': listing_id})
+    
+    @staticmethod
     def extract_id(url):
         if url:
             re_groups = re.search('www.airbnb.com/rooms/([0-9]*).*', url)
@@ -124,7 +128,7 @@ class Listing:
     @staticmethod
     def write_listing_from_url(url: str, trip_id: int, db: Collection) -> int:
         listing = Listing.create_from_url(url, trip_id)
-        listing.get_and_parse_data()
+        listing.populate_listing_properties()
         
         if listing.properties:
             result = db['listings'].insert_one(listing)
@@ -134,22 +138,27 @@ class Listing:
 
 
 class Trip:
-    def __init__(self, trip_id):
+    def __init__(self, trip_id, db, all_listing_properties=None):
         self.trip_id = trip_id
+        self.db = db
+        self.all_listing_properties = all_listing_properties
 
-    def get_all_listings(self, db):
-        all_listing_records = db['listings'].find({'trip_id': self.trip_id})
+    def populate_trip(self):
+        self.all_listing_properties = self.get_and_combine_all_listings()
+
+    def get_all_listings(self):
+        all_listing_records = self.db['listings'].find({'trip_id': self.trip_id})
         # if all_listing_records.collection.count_documents({})>0:
         all_listings = []
         for listing_record in all_listing_records:
             listing = Listing(listing_record['listing_id'], listing_record['url'], listing_record['trip_id'], 
                 listing_record['raw_listing_json'], listing_record['properties'])
             all_listings.append(listing)
-        return all_listings
+        all_listings
         
-    def get_and_combine_all_listings(self, db) -> list:
-        all_listings = self.get_all_listings(db)
-        if len(all_listings) > 0:
+    def get_and_combine_all_listings(self):
+        all_listings = self.get_all_listings()
+        if all_listings and len(all_listings) > 0:
             all_listings_pd = []
             for listing in all_listings:
                 listing_df = pd.DataFrame(listing.properties, index=[listing.listing_id])
@@ -158,6 +167,12 @@ class Trip:
             return self.combine_listings(all_listings_pd)
         else:
             return pd.DataFrame()
+
+    def delete_listing(self, listing_id) -> None:
+        Listing.delete_listing(listing_id, self.trip_id, self.db)
+        # If results have been cached, remove from the DataFrame as well as DB
+        if self.all_listing_properties:
+            self.all_listing_properties = self.all_listing_properties.loc[~listing_id]
 
     @staticmethod
     def combine_listings(listings: list[str]) -> pd.DataFrame:
@@ -171,24 +186,33 @@ def test_populate_trips(db, method):
         urls = ['https://www.airbnb.com/rooms/45797974', 'https://www.airbnb.com/rooms/22023500?q=123']
         for url in urls:
             listing = Listing.create_from_url(url, '_test')    
-            listing.get_and_parse_data()
-            return listing.write_to_db(db)
+            listing.populate_listing_properties()
+            listing.write_to_db(db)
 
 def test_get_and_combine_all_listings(db):
-    listings = Trip('_test').get_and_combine_all_listings(db)
+    listings = Trip('_test', db).get_and_combine_all_listings()
     return listings
+
+def test_read_from_db():
+    # print(Listing.read_from_db(34455224, '3', db))
+    found_listing = Listing.read_from_db(45797974, '5', db)
+    found_listing.populate_listing_properties()
+    return found_listing.raw_listing_json
 
 if __name__=='__main__':
     mongodb_uri = os.environ['MONGODB_URI']
     client = MongoClient(mongodb_uri)
     db=client['compairbnb']
 
-    def test2():
-        # print(Listing.read_from_db(34455224, '3', db))
-        found_listing = Listing.read_from_db(45797974, '5', db)
-        found_listing.get_and_parse_data()
-        print(found_listing.raw_listing_json)
-
-    # print(test_populate_trips(db, 'url'))
+    print(test_populate_trips(db, 'url'))
     print(test_get_and_combine_all_listings(db))
+    
+    trip = Trip('_Test', db)
+    trip.delete_listing(45797974)
+    print('deleted listing 45797974')
+    print('all properties:')
+    print(trip.all_listing_properties)
+    print('db:')
+    print(test_get_and_combine_all_listings(db))
+    
     print('done!')
