@@ -154,7 +154,7 @@ class Trip:
             listing = Listing(listing_record['listing_id'], listing_record['url'], listing_record['trip_id'], 
                 listing_record['raw_listing_json'], listing_record['properties'])
             all_listings.append(listing)
-        all_listings
+        return all_listings
         
     def get_and_combine_all_listings(self):
         all_listings = self.get_all_listings()
@@ -204,15 +204,7 @@ if __name__=='__main__':
     client = MongoClient(mongodb_uri)
     db=client['compairbnb']
 
-    print(test_populate_trips(db, 'url'))
-    print(test_get_and_combine_all_listings(db))
-    
-    trip = Trip('_Test', db)
-    trip.delete_listing(45797974)
-    print('deleted listing 45797974')
-    print('all properties:')
+    trip = Trip('_test', db)
+    trip.populate_trip()
     print(trip.all_listing_properties)
-    print('db:')
-    print(test_get_and_combine_all_listings(db))
-    
     print('done!')

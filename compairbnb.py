@@ -1,6 +1,5 @@
 import argparse
 import airbnb
-import glob
 import json
 from pymongo import MongoClient
 import os
