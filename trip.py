@@ -10,8 +10,8 @@ import requests
 
 # # TODO:
 # + How to properly write test functions in Python
-# + When to store in memory and when to read from db
 # + Stop reloading page after submitting URL
+# + When to store in memory and when to read from db
 
 class Listing:
     api = airbnb.Api(randomize=True)
@@ -32,7 +32,7 @@ class Listing:
         self.raw_listing_json = Listing.get_raw_json(self)
         self.properties = Listing.get_properties_from_raw_json(self)
 
-    def write_to_db(self, db: Collection) -> int:
+    def write_to_db(self, collection: Collection) -> int:
         '''
         Writes Listing to DB. Returns the result retured by insert_one()  
         '''        
@@ -43,7 +43,7 @@ class Listing:
             record['trip_id'] = self.trip_id
             record['raw_listing_json'] = self.raw_listing_json
             record['properties'] = self.properties
-            result = db['listings'].insert_one(record)
+            result = collection.insert_one(record)
             return result
 
     @classmethod
@@ -60,10 +60,10 @@ class Listing:
         return cls(listing_id, url, trip_id)
 
     @classmethod
-    def read_from_db(cls, listing_id, trip_id, db: Collection):
+    def read_from_db(cls, listing_id, trip_id, collection: Collection):
         assert isinstance(trip_id, str)
         
-        result = db['listings'].find_one({'listing_id': listing_id, 'trip_id': trip_id})
+        result = collection.find_one({'listing_id': listing_id, 'trip_id': trip_id})
         return cls(result['listing_id'], result['url'], result['trip_id'], result['raw_listing_json'], result['properties'])
 
     @classmethod
@@ -102,8 +102,8 @@ class Listing:
         return properties     
 
     @staticmethod
-    def delete_listing(listing_id: int, trip_id: str, db: Collection) -> None:
-        db['listings'].delete_one({'trip_id': trip_id, 'listing_id': listing_id})
+    def delete_listing(listing_id: int, trip_id: str, collection: Collection) -> None:
+        collection.delete_one({'trip_id': trip_id, 'listing_id': listing_id})
     
     @staticmethod
     def extract_id(url):
@@ -126,28 +126,27 @@ class Listing:
         return num_bed_types
 
     @staticmethod
-    def write_listing_from_url(url: str, trip_id: int, db: Collection) -> int:
+    def write_listing_from_url(url: str, trip_id: int, collection: Collection) -> int:
         listing = Listing.create_from_url(url, trip_id)
         listing.populate_listing_properties()
         
         if listing.properties:
-            result = db['listings'].insert_one(listing)
-            return result
+            return listing.write_to_db(collection)
         else:
             return 1
 
 
 class Trip:
-    def __init__(self, trip_id, db, all_listing_properties=None):
+    def __init__(self, trip_id, collection, all_listing_properties=None):
         self.trip_id = trip_id
-        self.db = db
+        self.collection = collection
         self.all_listing_properties = all_listing_properties
 
     def populate_trip(self):
         self.all_listing_properties = self.get_and_combine_all_listings()
 
     def get_all_listings(self):
-        all_listing_records = self.db['listings'].find({'trip_id': self.trip_id})
+        all_listing_records = self.collection.find({'trip_id': self.trip_id})
         # if all_listing_records.collection.count_documents({})>0:
         all_listings = []
         for listing_record in all_listing_records:
@@ -169,7 +168,7 @@ class Trip:
             return pd.DataFrame()
 
     def delete_listing(self, listing_id) -> None:
-        Listing.delete_listing(listing_id, self.trip_id, self.db)
+        Listing.delete_listing(listing_id, self.trip_id, self.collection)
         # If results have been cached, remove from the DataFrame as well as DB
         if self.all_listing_properties:
             self.all_listing_properties = self.all_listing_properties.loc[~listing_id]
@@ -181,21 +180,21 @@ class Trip:
         else:
             return pd.DataFrame()
 
-def test_populate_trips(db, method):
+def test_populate_trips(collection, method):
     if method=='url':
         urls = ['https://www.airbnb.com/rooms/45797974', 'https://www.airbnb.com/rooms/22023500?q=123']
         for url in urls:
             listing = Listing.create_from_url(url, '_test')    
             listing.populate_listing_properties()
-            listing.write_to_db(db)
+            listing.write_to_db(collection)
 
-def test_get_and_combine_all_listings(db):
-    listings = Trip('_test', db).get_and_combine_all_listings()
+def test_get_and_combine_all_listings(collection):
+    listings = Trip('_test', collection).get_and_combine_all_listings()
     return listings
 
 def test_read_from_db():
-    # print(Listing.read_from_db(34455224, '3', db))
-    found_listing = Listing.read_from_db(45797974, '5', db)
+    # print(Listing.read_from_db(34455224, '3', collection))
+    found_listing = Listing.read_from_db(45797974, '5', collection)
     found_listing.populate_listing_properties()
     return found_listing.raw_listing_json
 
@@ -204,7 +203,7 @@ if __name__=='__main__':
     client = MongoClient(mongodb_uri)
     db=client['compairbnb']
 
-    trip = Trip('_test', db)
+    trip = Trip('_test', db['listings'])
     trip.populate_trip()
     print(trip.all_listing_properties)
     print('done!')

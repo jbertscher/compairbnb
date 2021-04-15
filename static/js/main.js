@@ -24,7 +24,6 @@ fetch('/api/' + trip_id)
             };
             tabledata_parsed[i].num_bed_types = JSON.parse(tabledata_parsed[i].num_bed_types)
         };
-        // console.log(tabledata_parsed)
 
         //create Tabulator on DOM element with id "example-table"
         var table = new Tabulator("#listings-table", {
@@ -70,7 +69,7 @@ fetch('/api/' + trip_id)
                     // A JSON payload
                     body: JSON.stringify({
                         "action": "delete_listing",
-                        "listing_id": cell.getRow().getData().id
+                        "listing_id": cell.getRow().getData().listing_id
                     })
                 }).then(function (response) { // At this point, Flask has printed our JSON
                     return response.text();
