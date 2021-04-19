@@ -9,8 +9,8 @@ import re
 import requests
 
 # # TODO:
-# + How to properly write test functions in Python
 # + Stop reloading page after submitting URL
+# + How to properly write test functions in Python
 # + When to store in memory and when to read from db
 
 class Listing:
@@ -37,13 +37,15 @@ class Listing:
         Writes Listing to DB. Returns the result retured by insert_one()  
         '''        
         if self.raw_listing_json:
-            record = {}
-            record['listing_id'] = int(self.listing_id)
-            record['url'] = self.url
-            record['trip_id'] = self.trip_id
-            record['raw_listing_json'] = self.raw_listing_json
-            record['properties'] = self.properties
-            result = collection.insert_one(record)
+            result = collection.insert_one(
+                {
+                    'listing_id': int(self.listing_id),
+                    'url': self.url,
+                    'trip_id': self.trip_id,
+                    'raw_listing_json': self.raw_listing_json,
+                    'properties': self.properties    
+                }
+            )
             return result
 
     @classmethod
@@ -98,7 +100,6 @@ class Listing:
             'p3_summary_title': listing.raw_listing_json['pdp_listing_detail']['p3_summary_title'],
             'p3_summary_address': listing.raw_listing_json['pdp_listing_detail']['p3_summary_address']
         }
-
         return properties     
 
     @staticmethod
@@ -137,7 +138,7 @@ class Listing:
 
 
 class Trip:
-    def __init__(self, trip_id, collection, all_listing_properties=None):
+    def __init__(self, trip_id, collection, all_listing_properties: pd.DataFrame = None):
         self.trip_id = trip_id
         self.collection = collection
         self.all_listing_properties = all_listing_properties
