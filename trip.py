@@ -9,7 +9,8 @@ import re
 import requests
 
 # # TODO:
-# + Stop reloading page after submitting URL
+# + Reload table after submitting new url without reloading (now that page doesn't reload)
+# + Clear new url from text box after submit
 # + How to properly write test functions in Python
 # + When to store in memory and when to read from db
 

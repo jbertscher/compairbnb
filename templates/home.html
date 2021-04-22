@@ -13,19 +13,6 @@ Home
 <div id="listings-table"></div>
 <link href="static/lib/css/tabulator.min.css" rel="stylesheet">
 <script type=text/javascript src="{{url_for('static', filename='lib/js/jquery-3.6.0.min.js') }}"></script>
-<script type="text/javascript">
-    $('#submitUrl').submit(function(e){
-        e.preventDefault();
-        $.ajax({
-            url: '/submit_url/{{ trip_id }}',
-            type: 'post',
-            data:$('#submitUrl').serialize(),
-            success:function(){
-                console.log('this worked')
-            }
-        });
-    });
-</script>
 <script type="text/javascript" src="static/lib/js/tabulator/tabulator.min.js"></script>
 <script type="text/javascript"> var trip_id = "{{ trip_id }}" </script>
 <script type="text/javascript" src="{{url_for('static', filename='js/main.js') }}"></script>
