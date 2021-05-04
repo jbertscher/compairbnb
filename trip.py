@@ -15,7 +15,8 @@ import requests
 # + When to store in memory and when to read from db
 
 class Listing:
-    api = airbnb.Api(randomize=True)
+    # api = airbnb.Api(randomize=True)
+    api = airbnb.Api(api_key='d306zoyjsyarp7ifhu67rjxn52tv0t20', randomize=True)
 
     def __init__(self, listing_id: int, url: str, trip_id: str, raw_listing_json: str = None, 
         properties: str = None):

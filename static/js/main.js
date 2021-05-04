@@ -3,16 +3,8 @@ $( document ).ready(function() {
     var tabledata;
     var table; 
 
-    fetch('/api/' + trip_id)
-        .then(function (response) {
-            return response.json();
-        }).then(function (json) {
-            tabledata = json;
-
-            console.log('Table data:');
-            console.log(tabledata); 
-
-            tabledata_parsed = JSON.parse(tabledata);
+    function parse_data(tabledata) {
+        tabledata_parsed = JSON.parse(tabledata);
             var bed_types = [];
             var bed_type_cols = [];
             for(var i=0; i<tabledata_parsed.length; i++) {
@@ -27,6 +19,27 @@ $( document ).ready(function() {
                 };
                 tabledata_parsed[i].num_bed_types = JSON.parse(tabledata_parsed[i].num_bed_types)
             };
+
+            return(
+                {
+                    'bed_type_cols': bed_type_cols,
+                    'tabledata_parsed': tabledata_parsed
+                }
+            )
+    }
+
+    fetch('/api/' + trip_id)
+        .then(function (response) {
+            return response.json();
+        }).then(function (json) {
+            tabledata = json;
+
+            console.log('Table data:');
+            console.log(tabledata); 
+
+            parsed_data = parse_data(tabledata);
+            bed_type_cols = parsed_data['bed_type_cols'];
+            tabledata_parsed = parsed_data['tabledata_parsed'];
 
             //create Tabulator on DOM element with id "example-table"
             table = new Tabulator("#listings-table", {
@@ -90,7 +103,7 @@ $( document ).ready(function() {
     $('#submitUrl').submit(function(e){
         e.preventDefault();
         $.ajax({
-            url: '/submit_url/{{ trip_id }}',
+            url: '/submit_url/' + trip_id,
             type: 'post',
             data:$('#submitUrl').serialize(),
             success:function(){
@@ -99,7 +112,8 @@ $( document ).ready(function() {
                     .then(function (response) {
                         return response.json();
                     }).then(function (json) {
-                        tabledata = json;
+                        tabledata = parse_data(json)['tabledata_parsed'];
+                        console.log(tabledata);
                         table.replaceData(tabledata);
                     });
             }
