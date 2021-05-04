@@ -9,10 +9,13 @@ import re
 import requests
 
 # # TODO:
-# + Reload table after submitting new url without reloading (now that page doesn't reload)
 # + Clear new url from text box after submit
+# + don't allow duplicate listings to be added
+# + create new dummy account for this
 # + How to properly write test functions in Python
-# + When to store in memory and when to read from db
+# + Make javascript cleaner and understand better what's going on there (and comment)
+# + When to store in memory and when to read from db (take into account different users using same trip at same time)
+# + think about allowing users to log in so using their own access tokens
 
 class Listing:
     # api = airbnb.Api(randomize=True)
