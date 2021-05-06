@@ -107,15 +107,17 @@ $( document ).ready(function() {
             type: 'post',
             data:$('#submitUrl').serialize(),
             success:function(){
-                console.log('this worked')
                 fetch('/api/' + trip_id)
                     .then(function (response) {
                         return response.json();
                     }).then(function (json) {
                         tabledata = parse_data(json)['tabledata_parsed'];
-                        console.log(tabledata);
                         table.replaceData(tabledata);
                     });
+            },
+            complete:function(){
+                console.log('should clear now 2');
+                $('#urlInput').val('');
             }
         });
     });
