@@ -9,17 +9,17 @@ import re
 import requests
 
 # # TODO:
-# + Clear new url from text box after submit
-# + don't allow duplicate listings to be added
 # + create new dummy account for this
 # + How to properly write test functions in Python
 # + Make javascript cleaner and understand better what's going on there (and comment)
+# + Create from trip -> listing perspective (i.e. always need a trip for a listing) as opposed to listing -> trip where we call listing directly
 # + When to store in memory and when to read from db (take into account different users using same trip at same time)
 # + think about allowing users to log in so using their own access tokens
 
+AIRBNB_API_KEY = os.environ['AIRBNB_API_KEY']
+
 class Listing:
-    # api = airbnb.Api(randomize=True)
-    api = airbnb.Api(api_key='d306zoyjsyarp7ifhu67rjxn52tv0t20', randomize=True)
+    api = airbnb.Api(api_key=AIRBNB_API_KEY, randomize=True)
 
     def __init__(self, listing_id: int, url: str, trip_id: str, raw_listing_json: str = None, 
         properties: str = None):
@@ -41,17 +41,19 @@ class Listing:
         '''
         Writes Listing to DB. Returns the result retured by insert_one()  
         '''        
-        if self.raw_listing_json:
-            result = collection.insert_one(
-                {
-                    'listing_id': int(self.listing_id),
-                    'url': self.url,
-                    'trip_id': self.trip_id,
-                    'raw_listing_json': self.raw_listing_json,
-                    'properties': self.properties    
-                }
-            )
-            return result
+        # Don't write if listing id already found for that trip
+        if not collection.find_one({'listing_id' : self.listing_id, 'trip_id': self.trip_id}): 
+            if self.raw_listing_json:
+                result = collection.insert_one(
+                    {
+                        'listing_id': int(self.listing_id),
+                        'url': self.url,
+                        'trip_id': self.trip_id,
+                        'raw_listing_json': self.raw_listing_json,
+                        'properties': self.properties    
+                    }
+                )
+                return result
 
     @classmethod
     def create_from_id(cls, listing_id, trip_id):
@@ -135,11 +137,7 @@ class Listing:
     def write_listing_from_url(url: str, trip_id: int, collection: Collection) -> int:
         listing = Listing.create_from_url(url, trip_id)
         listing.populate_listing_properties()
-        
-        if listing.properties:
-            return listing.write_to_db(collection)
-        else:
-            return 1
+        listing.write_to_db(collection)
 
 
 class Trip:
@@ -209,7 +207,14 @@ if __name__=='__main__':
     client = MongoClient(mongodb_uri)
     db=client['compairbnb']
 
-    trip = Trip('_test', db['listings'])
+    collection = db['listings']
+
+    trip = Trip('_test', collection)
     trip.populate_trip()
     print(trip.all_listing_properties)
-    print('done!')
+    listing = Listing.create_from_url('https://www.airbnb.com/rooms/28911289?check_in=2021-07-14&check_out=2021-07-17&federated_search_id=24f78094-2331-4b5a-8f48-01967c52d713', '_test')
+    listing.populate_listing_properties()
+    print(listing)
+    listing.write_to_db(collection)
+    trip.populate_trip()
+    print(trip.all_listing_properties)
