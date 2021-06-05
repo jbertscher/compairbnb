@@ -9,10 +9,8 @@ import re
 import requests
 
 # # TODO:
-# + create new dummy account for this
 # + How to properly write test functions in Python
 # + Make javascript cleaner and understand better what's going on there (and comment)
-# + Create from trip -> listing perspective (i.e. always need a trip for a listing) as opposed to listing -> trip where we call listing directly
 # + When to store in memory and when to read from db (take into account different users using same trip at same time)
 # + think about allowing users to log in so using their own access tokens
 
@@ -37,7 +35,7 @@ class Listing:
         self.raw_listing_json = Listing.get_raw_json(self)
         self.properties = Listing.get_properties_from_raw_json(self)
 
-    def write_to_db(self, collection: Collection) -> int:
+    def write_to_db(self, collection: Collection):
         '''
         Writes Listing to DB. Returns the result retured by insert_one()  
         '''        
@@ -176,6 +174,11 @@ class Trip:
         # If results have been cached, remove from the DataFrame as well as DB
         if self.all_listing_properties:
             self.all_listing_properties = self.all_listing_properties.loc[~listing_id]
+    
+    def write_listing_from_url(self, url: str):
+        listing = Listing.create_from_url(url, self.trip_id)
+        listing.populate_listing_properties()
+        listing.write_to_db(self.collection)
 
     @staticmethod
     def combine_listings(listings: list[str]) -> pd.DataFrame:
@@ -184,37 +187,3 @@ class Trip:
         else:
             return pd.DataFrame()
 
-def test_populate_trips(collection, method):
-    if method=='url':
-        urls = ['https://www.airbnb.com/rooms/45797974', 'https://www.airbnb.com/rooms/22023500?q=123']
-        for url in urls:
-            listing = Listing.create_from_url(url, '_test')    
-            listing.populate_listing_properties()
-            listing.write_to_db(collection)
-
-def test_get_and_combine_all_listings(collection):
-    listings = Trip('_test', collection).get_and_combine_all_listings()
-    return listings
-
-def test_read_from_db():
-    # print(Listing.read_from_db(34455224, '3', collection))
-    found_listing = Listing.read_from_db(45797974, '5', collection)
-    found_listing.populate_listing_properties()
-    return found_listing.raw_listing_json
-
-if __name__=='__main__':
-    mongodb_uri = os.environ['MONGODB_URI']
-    client = MongoClient(mongodb_uri)
-    db=client['compairbnb']
-
-    collection = db['listings']
-
-    trip = Trip('_test', collection)
-    trip.populate_trip()
-    print(trip.all_listing_properties)
-    listing = Listing.create_from_url('https://www.airbnb.com/rooms/28911289?check_in=2021-07-14&check_out=2021-07-17&federated_search_id=24f78094-2331-4b5a-8f48-01967c52d713', '_test')
-    listing.populate_listing_properties()
-    print(listing)
-    listing.write_to_db(collection)
-    trip.populate_trip()
-    print(trip.all_listing_properties)

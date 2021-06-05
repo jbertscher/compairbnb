@@ -10,15 +10,15 @@ client = MongoClient(mongodb_uri)
 db=client['compairbnb']
 listing_collection = db['listings']
 
+
 @app.route('/submit_url/<trip_id>', methods=['POST'])
 def submit_url(trip_id):
     new_url = request.form.get('url')
     if new_url != '':
-        Listing.write_listing_from_url(new_url, trip_id, listing_collection)
+        Trip(trip_id, listing_collection).write_listing_from_url(new_url)
         return 'OK', 200
     else:
         return 'ERROR', 204
-    # return redirect(url_for('home', trip_id=trip_id))
 
 
 @app.route('/api/<trip_id>', methods=['GET', 'POST'])
