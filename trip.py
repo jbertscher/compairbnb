@@ -117,7 +117,7 @@ class Listing:
             'bed_label': p.search(listing.raw_listing_json['pdp_listing_detail']['bed_label']).group(0),
             'bedroom_label': p.search(listing.raw_listing_json['pdp_listing_detail']['bedroom_label']).group(0),
             'guest_label': p.search(listing.raw_listing_json['pdp_listing_detail']['guest_label']).group(0),
-            'num_bed_types': json.dumps(cls.parse_beds(listing)),
+            'num_bed_types': cls.parse_beds(listing),
             'p3_summary_title': listing.raw_listing_json['pdp_listing_detail']['p3_summary_title'],
             'p3_summary_address': listing.raw_listing_json['pdp_listing_detail']['p3_summary_address']
         }
@@ -179,7 +179,8 @@ class Trip:
             all_listings.append(listing)
         return all_listings
         
-        
+    # TODO:
+    # num_bed_types becomes null when creating DF using listing.properties. Need to fix this (store as json object or string or something)    
     def get_and_combine_all_listings(self):
         all_listings = self.get_all_listings()
         if all_listings and len(all_listings) > 0:
@@ -192,10 +193,14 @@ class Trip:
             return pd.DataFrame()
 
 
-    def delete_listing(self, listing_id) -> None:
+    def delete_listing(self, listing_id: str, delete_from_cache: bool = True) -> None:
+        '''
+        Deletes a listing from the database and from cache by detault. Be careful deleting from cache when looping though all the listings
+        as this has side-effects. In that case, use delete_from_cache = False.
+        '''
         Listing.delete_listing(listing_id, self.trip_id, self.collection)
         # If results have been cached, remove from the DataFrame as well as DB
-        if self.all_listing_properties:
+        if self.all_listing_properties is not None and delete_from_cache:
             self.all_listing_properties = self.all_listing_properties.loc[~listing_id]
     
 
