@@ -26,7 +26,7 @@ def api(trip_id):
     trip = Trip(trip_id, listing_collection)
     # GET request
     if request.method == 'GET':
-        response = trip.get_and_combine_all_listings().to_json(orient='records')
+        response = trip.get_and_combine_all_listings()#.to_json(orient='records')
         return jsonify(response)  # serialize and use JSON headers
     # POST request
     if request.method == 'POST':
@@ -38,7 +38,7 @@ def api(trip_id):
 
 @app.route('/<trip_id>')
 def home(trip_id):
-    all_listings = Trip(trip_id, listing_collection).get_and_combine_all_listings()
+    # all_listings = Trip(trip_id, listing_collection).get_and_combine_all_listings()
     return render_template('home.html', trip_id=trip_id)
 
 

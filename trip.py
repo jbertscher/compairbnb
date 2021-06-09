@@ -184,13 +184,18 @@ class Trip:
     def get_and_combine_all_listings(self):
         all_listings = self.get_all_listings()
         if all_listings and len(all_listings) > 0:
-            all_listings_pd = []
+            # all_listings_pd = []
+            all_listings_combined = []
             for listing in all_listings:
-                listing_df = pd.DataFrame(listing.properties, index=[listing.listing_id])
-                all_listings_pd.append(listing_df)
-            return self.combine_listings(all_listings_pd)
+                # listing_df = pd.DataFrame(listing.properties, index=[listing.listing_id])
+                # all_listings_pd.append(listing_df)
+                # all_listings_combined[listing.listing_id] = listing.properties
+                all_listings_combined.append(listing.properties)
+            # return self.combine_listings(all_listings_pd)
+            return all_listings_combined
         else:
-            return pd.DataFrame()
+            # return pd.DataFrame()
+            return []
 
 
     def delete_listing(self, listing_id: str, delete_from_cache: bool = True) -> None:
@@ -200,8 +205,8 @@ class Trip:
         '''
         Listing.delete_listing(listing_id, self.trip_id, self.collection)
         # If results have been cached, remove from the DataFrame as well as DB
-        if self.all_listing_properties is not None and delete_from_cache:
-            self.all_listing_properties = self.all_listing_properties.loc[~listing_id]
+        # if self.all_listing_properties is not None and delete_from_cache:
+        #     self.all_listing_properties = self.all_listing_properties.loc[~listing_id]
     
 
     def write_listing_from_url(self, url: str):
@@ -211,7 +216,7 @@ class Trip:
 
 
     @staticmethod
-    def combine_listings(listings: list[str]) -> pd.DataFrame:
+    def combine_listings(listings: list[pd.DataFrame]) -> pd.DataFrame:
         if len(listings)>0:
             return pd.concat(listings, axis=0)
         else:

@@ -4,35 +4,33 @@ $( document ).ready(function() {
     var table; 
 
     // Parses the json and nested json objects. Keeps track of all the nested column names for table display later.
-    function parse_json(tabledata) {
-        tabledata_parsed = JSON.parse(tabledata);
-        return tabledata_parsed
-            // var bed_types = [];
-            // var bed_type_cols = [];
-            // // Loops through each listing, building a distinct array of bed types to serve as nested columns in the display table. End result
-            // // is a an array of objects where each key is the column name and the value is the key within the final parsed json object that
-            // // should be displayed for that column.
-            // for(var i=0; i<tabledata_parsed.length; i++) {
-            //     listing_i = JSON.parse(tabledata_parsed[i].num_bed_types)
-            //     Object.keys(listing_i).forEach(bed_type => {
-            //         if (!bed_types.includes(bed_type)) {
-            //             bed_types.push(bed_type)
-            //             bed_type_cols.push({'title': bed_type,'field': 'num_bed_types.' + bed_type});
-            //         }
-            //     });
-            //     if(tabledata_parsed[i].num_bed_types == '{}') {
-            //         tabledata_parsed[i].num_bed_types = null;
-            //     };
-            //     tabledata_parsed[i].num_bed_types = JSON.parse(tabledata_parsed[i].num_bed_types)
-            // };
+    function parse_tabledata(tabledata) {
+            var bed_types = [];
+            var bed_type_cols = [];
+            // Loops through each listing, building a distinct array of bed types to serve as nested columns in the display table. End result
+            // is a an array of objects where each key is the column name and the value is the key within the final parsed json object that
+            // should be displayed for that column.
+            for(var i=0; i<tabledata.length; i++) {
+                listing_i = tabledata[i].num_bed_types
+                Object.keys(listing_i).forEach(bed_type => {
+                    if (!bed_types.includes(bed_type)) {
+                        bed_types.push(bed_type)
+                        bed_type_cols.push({'title': bed_type,'field': 'num_bed_types.' + bed_type});
+                    }
+                });
+                if(tabledata[i].num_bed_types == '{}') {
+                    tabledata[i].num_bed_types = null;
+                };
+                tabledata[i].num_bed_types = tabledata[i].num_bed_types
+            };
 
-            // // Returns bed type columns and key for their respective values as well as parsed json object containing the data.
-            // return(
-            //     {
-            //         'bed_type_cols': bed_type_cols,
-            //         'tabledata_parsed': tabledata_parsed
-            //     }
-            // )
+            // Returns bed type columns and key for their respective values as well as parsed json object containing the data.
+            return(
+                {
+                    'bed_type_cols': bed_type_cols,
+                    'tabledata_parsed': tabledata
+                }
+            )
     }
 
     fetch('/api/' + trip_id)
@@ -44,9 +42,12 @@ $( document ).ready(function() {
             console.log('Table data:');
             console.log(tabledata); 
 
-            tabledata_parsed = JSON.parse(tabledata);
-            // bed_type_cols = parsed_data['bed_type_cols'];
-            // tabledata_parsed = parsed_data['tabledata_parsed'];
+            // tabledata_parsed = JSON.parse(tabledata);
+            // tabledata_parsed = JSON.stringify(tabledata);
+            // console.log(tabledata_parsed); 
+            all_parsed_data = parse_tabledata(tabledata)
+            bed_type_cols = all_parsed_data['bed_type_cols'];
+            tabledata_parsed = all_parsed_data['tabledata_parsed'];
 
             //create Tabulator on DOM element with id "example-table"
             table = new Tabulator("#listings-table", {
@@ -64,11 +65,12 @@ $( document ).ready(function() {
                     {title:"Title", field:"p3_summary_title", formatter:"textarea"},
                     {title:"Bedrooms", field:"bedroom_label"},
                     // Grouped columns
-                    // {
-                    //     title:"Beds", 
-                    //     // columns: bed_type_cols
-                    //     columns: {'queen_bed': 'num_bed_types.queen_bed'}
-                    // },
+                    {
+                        title:"Beds", 
+                        columns: bed_type_cols
+                        // columns: [{title:"queen_bed", field: "num_bed_types.queen_bed"}]
+                        // {title:"sofa_bed", field: "num_bed_types.sofa_bed"}]
+                    },
                     {title:"Bathrooms", field:"bathroom_label"},
                     {title:"Guests", field:"guest_label"},
                     {title:"Location", field:"p3_summary_address", formatter:"textarea"}
@@ -120,8 +122,12 @@ $( document ).ready(function() {
                     .then(function (response) {
                         return response.json();
                     }).then(function (json) {
-                        tabledata = parse_json(json)['tabledata_parsed'];
+                        all_parsed_data = parse_tabledata(json);
+                        tabledata = all_parsed_data['tabledata_parsed'];
+                        bed_type_cols = all_parsed_data['bed_type_cols']
+                        console.log(bed_type_cols)
                         table.replaceData(tabledata);
+                        table.updateColumnDefinition({title: "Beds", columns: bed_type_cols});
                     });
             },
             complete:function(){
