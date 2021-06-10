@@ -12,9 +12,6 @@ import requests
 from typing import Optional
 
 # # TODO:
-# + Update grouped columns when new listing added
-# + Make javascript cleaner and understand better what's going on there (and comment)
-# + Do more logic in Python instead of JS
 # + Add features:
 # ++ price
 # ++ commenting for single user
@@ -184,17 +181,11 @@ class Trip:
     def get_and_combine_all_listings(self):
         all_listings = self.get_all_listings()
         if all_listings and len(all_listings) > 0:
-            # all_listings_pd = []
             all_listings_combined = []
             for listing in all_listings:
-                # listing_df = pd.DataFrame(listing.properties, index=[listing.listing_id])
-                # all_listings_pd.append(listing_df)
-                # all_listings_combined[listing.listing_id] = listing.properties
                 all_listings_combined.append(listing.properties)
-            # return self.combine_listings(all_listings_pd)
             return all_listings_combined
         else:
-            # return pd.DataFrame()
             return []
 
 
