@@ -1,7 +1,7 @@
 from __future__ import annotations
 import os
 from socket import send_fds
-import airbnb
+import airbnb  # https://github.com/nderkach/airbnb-python
 import json
 import pandas as pd
 from pymongo import MongoClient, mongo_client
@@ -13,9 +13,11 @@ from typing import Optional
 
 # # TODO:
 # + Add features:
-# ++ price
+# ++ price: requires calling a different API endpoint: https://www.airbnb.com/api/v3/StaysPdpSections but this isn't implemented in the airbnb library that I'm using
 # ++ commenting for single user
+# ++ star rating
 # ++ commenting for multiple users
+# + Make automatic sizing nicer
 # + Implement testing
 # + When to store in memory and when to read from db (take into account different users using same trip at same time)
 # + think about allowing users to log in so using their own access tokens
