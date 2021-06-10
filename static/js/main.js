@@ -1,46 +1,55 @@
-var tabledata;
+$( document ).ready(function() {
 
-fetch('/api/' + trip_id)
-    .then(function (response) {
-        return response.json();
-    }).then(function (json) {
-        tabledata = json;
-
-        console.log('Table data:');
-        console.log(tabledata); 
-
-        tabledata_parsed = JSON.parse(tabledata);
+    // Returns an array of the bed types and how they map to the values in the table data
+    function extract_bed_types_nums(tabledata) {
         var bed_types = [];
         var bed_type_cols = [];
-        for(var i=0; i<tabledata_parsed.length; i++) {
-            Object.keys(JSON.parse(tabledata_parsed[i].num_bed_types)).forEach(bed_type => {
+        // Loop through each listing
+        for(var i=0; i<tabledata.length; i++) {
+            listing_i = tabledata[i].num_bed_types
+            // For each bed type in the bed_type key, will add the bed type to the array if it doesn't exist
+            Object.keys(listing_i).forEach(bed_type => {
                 if (!bed_types.includes(bed_type)) {
                     bed_types.push(bed_type)
                     bed_type_cols.push({'title': bed_type,'field': 'num_bed_types.' + bed_type});
                 }
             });
-            if(tabledata_parsed[i].num_bed_types == '{}') {
-                tabledata_parsed[i].num_bed_types = null;
-            };
-            tabledata_parsed[i].num_bed_types = JSON.parse(tabledata_parsed[i].num_bed_types)
         };
-        // console.log(tabledata_parsed)
 
-        //create Tabulator on DOM element with id "example-table"
-        var table = new Tabulator("#listings-table", {
-            minHeight:220, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
-            data:tabledata_parsed, //assign data to table
-            layout:"fitColumns", //fit columns to width of table (optional),
-            columns:[ //Define Table Columns
+        // Returns bed type columns and key for their respective values
+        return bed_type_cols
+    }
+
+    fetch('/api/' + trip_id)
+        .then(function (response) {
+            return response.json();
+        }).then(function (json) {
+            tabledata = json;
+            load_table(tabledata)
+        });
+
+    function load_table(tabledata) {
+        console.log('Table data:');
+        console.log(tabledata); 
+
+        bed_type_cols = extract_bed_types_nums(tabledata);
+
+        // Create Tabulator on DOM element with id "example-table"
+        table = new Tabulator("#listings-table", {
+            minHeight:220, // Set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+            data:tabledata, // Assign data to table
+            layout:"fitColumns", // Fit columns to width of table (optional),
+            columns:[ // Define Table Columns
                 {title:"Click image to visit URL", field:"image", formatter:"image", width:235, formatterParams:{
                     width:"225px",
                     height:"150px"
-                }, cellClick:function(e, cell) {
+                }, cellClick:function(e, cell) { // So that clicking the image takes you to the listing URL
                     var win = window.open(cell.getRow().getData().url, '_blank');
                     win.focus();
                 }},
                 {title:"Title", field:"p3_summary_title", formatter:"textarea"},
                 {title:"Bedrooms", field:"bedroom_label"},
+                // Grouped columns
                 {
                     title:"Beds", 
                     columns: bed_type_cols
@@ -70,7 +79,7 @@ fetch('/api/' + trip_id)
                     // A JSON payload
                     body: JSON.stringify({
                         "action": "delete_listing",
-                        "listing_id": cell.getRow().getData().id
+                        "listing_id": cell.getRow().getData().listing_id
                     })
                 }).then(function (response) { // At this point, Flask has printed our JSON
                     return response.text();
@@ -83,4 +92,27 @@ fetch('/api/' + trip_id)
                 });
             }
         }, true, "Delete");
+    };
+    
+    // This gets executed when a new listing is submitted
+    // It clears the text box and reloads the table
+    $('#submitUrl').submit(function(e){
+        e.preventDefault();
+        $.ajax({
+            url: '/submit_url/' + trip_id,
+            type: 'post',
+            data:$('#submitUrl').serialize(),
+            success:function(){
+                fetch('/api/' + trip_id)
+                    .then(function (response) {
+                        return response.json();
+                    }).then(function (json) {
+                        load_table(json);
+                    });
+            },
+            complete:function(){
+                $('#urlInput').val('');
+            }
+        });
     });
+});
