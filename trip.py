@@ -13,11 +13,12 @@ from typing import Optional
 
 # # TODO:
 # + Add features:
-# ++ price: requires calling a different API endpoint: https://www.airbnb.com/api/v3/StaysPdpSections but this isn't implemented in the airbnb library that I'm using
-# ++ commenting for single user
 # ++ star rating
-# ++ commenting for multiple users
+# ++ commenting for single user
+# ++ favouriting (allow adding columns with names of different users)
 # + Make automatic sizing nicer
+# + Add price: requires calling a different API endpoint: https://www.airbnb.com/api/v3/StaysPdpSections but this isn't implemented in the airbnb library that I'm using
+# + Add commenting for multiple users
 # + Implement testing
 # + When to store in memory and when to read from db (take into account different users using same trip at same time)
 # + think about allowing users to log in so using their own access tokens
@@ -101,11 +102,16 @@ class Listing:
     @classmethod
     def get_properties_from_raw_json(cls, listing):
         pdp_listing_detail = listing.raw_listing_json['pdp_listing_detail']
-
         try:
             url = listing.url
         except KeyError:
             url = ''
+
+        # Accounts for edge case where there are no reviews
+        if len(listing.raw_listing_json['pdp_listing_detail']['reviews_module'])==0:
+            localized_overall_rating = "No ratings yet"
+        else:
+            localized_overall_rating = listing.raw_listing_json['pdp_listing_detail']['reviews_module']['localized_overall_rating']
 
         p = re.compile('^([0-9]*)')
         properties = {
@@ -119,7 +125,8 @@ class Listing:
             'guest_label': p.search(listing.raw_listing_json['pdp_listing_detail']['guest_label']).group(0),
             'num_bed_types': cls.parse_beds(listing),
             'p3_summary_title': listing.raw_listing_json['pdp_listing_detail']['p3_summary_title'],
-            'p3_summary_address': listing.raw_listing_json['pdp_listing_detail']['p3_summary_address']
+            'p3_summary_address': listing.raw_listing_json['pdp_listing_detail']['p3_summary_address'],
+            'localized_overall_rating': localized_overall_rating
         }
         return properties     
 
@@ -165,23 +172,12 @@ class Trip:
         self.all_listing_properties = all_listing_properties
 
 
-    def populate_trip(self):
-        self.all_listing_properties = self.get_and_combine_all_listings()
+    def populate_trip(self, reparse_raw_json: bool = True) -> None:
+        self.all_listing_properties = self.get_and_combine_all_listings(reparse_raw_json)
 
 
-    def get_all_listings(self):
-        all_listing_records = self.collection.find({'trip_id': self.trip_id})
-        # if all_listing_records.collection.count_documents({})>0:
-        all_listings = []
-        for listing_record in all_listing_records:
-            listing = Listing(listing_record['listing_id'], listing_record['url'], listing_record['trip_id'], 
-                listing_record['raw_listing_json'], listing_record['properties'])
-            all_listings.append(listing)
-        return all_listings
-        
-  
-    def get_and_combine_all_listings(self):
-        all_listings = self.get_all_listings()
+    def get_and_combine_all_listings(self, reparse_raw_json: bool = True) -> list:
+        all_listings = self.get_all_listings(reparse_raw_json)
         if all_listings and len(all_listings) > 0:
             all_listings_combined = []
             for listing in all_listings:
@@ -190,6 +186,21 @@ class Trip:
         else:
             return []
 
+
+    def get_all_listings(self, reparse_raw_json: bool = False) -> list[Listing]:
+        all_listing_records = self.collection.find({'trip_id': self.trip_id})
+        if all_listing_records.collection.count_documents({})>0:
+            all_listings = []
+            for listing_record in all_listing_records:
+                listing = Listing(listing_record['listing_id'], listing_record['url'], listing_record['trip_id'], 
+                    listing_record['raw_listing_json'])
+                if reparse_raw_json:
+                    listing.populate_listing_properties()
+                else:
+                    listing.properties = listing_record['properties']
+                all_listings.append(listing)
+            return all_listings
+        
 
     def delete_listing(self, listing_id: str, delete_from_cache: bool = True) -> None:
         '''

@@ -56,9 +56,9 @@ $( document ).ready(function() {
                 },
                 {title:"Bathrooms", field:"bathroom_label"},
                 {title:"Guests", field:"guest_label"},
-                {title:"Location", field:"p3_summary_address", formatter:"textarea"}
+                {title:"Location", field:"p3_summary_address", formatter:"textarea"},
+                {title:"Rating", field:"localized_overall_rating"}
             ]
-            // autoColumns:true
         });
 
         table.addColumn({

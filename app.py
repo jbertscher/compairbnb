@@ -26,7 +26,7 @@ def api(trip_id):
     trip = Trip(trip_id, listing_collection)
     # GET request
     if request.method == 'GET':
-        response = trip.get_and_combine_all_listings()#.to_json(orient='records')
+        response = trip.get_and_combine_all_listings()
         return jsonify(response)  # serialize and use JSON headers
     # POST request
     if request.method == 'POST':
