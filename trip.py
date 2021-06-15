@@ -13,7 +13,6 @@ from typing import Optional
 
 # # TODO:
 # + Add features:
-# ++ star rating
 # ++ commenting for single user
 # ++ favouriting (allow adding columns with names of different users)
 # + Make automatic sizing nicer
