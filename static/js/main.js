@@ -58,10 +58,33 @@ $( document ).ready(function() {
                 {title:"Guests", field:"guest_label"},
                 {title:"Location", field:"p3_summary_address", formatter:"textarea"},
                 {title:"Rating", field:"localized_overall_rating"},
-                {title:"Comments", editor:"textarea"}
+                {title:"Comments", field:"comments", editor:"textarea"}
             ],
             cellEdited: function(cell){
-                console.log(cell.getValue());
+                cell_value = cell.getValue()
+                fetch('/api/' + trip_id, {
+
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+
+                    method: 'POST',
+
+                    body: JSON.stringify({
+                        "action": "add_comments",
+                        "listing_id": cell.getRow().getData().listing_id,
+                        "comments": cell_value
+                    })
+
+                }).then(function (response) {
+                    return response.text();
+                }).then(function(text){
+
+                    console.log('POST response: ');
+
+                    // Should be 'OK' if everything was successful
+                    console.log(text);
+                })
             }
         });
 
@@ -74,7 +97,7 @@ $( document ).ready(function() {
 
                     // Declare what type of data we're sending
                     headers: {
-                    'Content-Type': 'application/json'
+                        'Content-Type': 'application/json'
                     },
 
                     // Specify the method
