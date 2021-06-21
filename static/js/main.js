@@ -34,20 +34,29 @@ $( document ).ready(function() {
 
         bed_type_cols = extract_bed_types_nums(tabledata);
 
+        //multiline text area
+        var customTextareaFormatter = function(cell, formatterParams, onRendered){
+            var el = cell.getElement();
+            el.style.whiteSpace = "pre-wrap";
+            el.style.overflow = "auto";
+            el.style.maxHeight = "150px";
+            return this.emptyToSpace(this.sanitizeHTML(cell.getValue()));
+        };
+        
         // Create Tabulator on DOM element with id "example-table"
         table = new Tabulator("#listings-table", {
             minHeight:220, // Set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
             data:tabledata, // Assign data to table
-            layout:"fitColumns", // Fit columns to width of table (optional),
+            layout:"fitData", // "fitColumns", // Fit columns to width of table (optional),
             columns:[ // Define Table Columns
-                {title:"Click image to visit URL", field:"image", formatter:"image", width:235, formatterParams:{
+                {title:"Click image to visit URL", field:"image", formatter:"image", width:235, frozen: true, formatterParams:{
                     width:"225px",
                     height:"150px"
                 }, cellClick:function(e, cell) { // So that clicking the image takes you to the listing URL
                     var win = window.open(cell.getRow().getData().url, '_blank');
                     win.focus();
                 }},
-                {title:"Title", field:"p3_summary_title", formatter:"textarea"},
+                {title:"Title", field:"p3_summary_title", maxWidth: 200, formatter:"textarea", frozen:true},
                 {title:"Bedrooms", field:"bedroom_label"},
                 // Grouped columns
                 {
@@ -56,9 +65,9 @@ $( document ).ready(function() {
                 },
                 {title:"Bathrooms", field:"bathroom_label"},
                 {title:"Guests", field:"guest_label"},
-                {title:"Location", field:"p3_summary_address", formatter:"textarea"},
+                {title:"Location", field:"p3_summary_address", maxWidth: 125, formatter:"textarea"},
                 {title:"Rating", field:"localized_overall_rating"},
-                {title:"Comments", field:"comments", editor:"textarea"}
+                {title:"Comments", field:"comments", formatter:customTextareaFormatter, editor:"textarea"}// formatter:customTextareaFormatter, editor:"textarea"}
             ],
             cellEdited: function(cell){
                 cell_value = cell.getValue()
@@ -118,7 +127,7 @@ $( document ).ready(function() {
                     console.log(text);
                 });
             }
-        }, true, "Delete");
+        }, true);
     };
     
     // This gets executed when a new listing is submitted

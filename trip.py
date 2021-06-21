@@ -18,7 +18,6 @@ from typing import Optional
 # + Using pipenv to download airbnb library
 # + Refactor code again:
 # ++ Maybe: Have separate listings collection and trip collection. Trip collection containing info on all the listings, which we read from listings collection.
-# ++ Perhaps just specifify db and have collection names taken care of in Trip class.
 # ++ When to store in memory and when to read from db (take into account different users using same trip at same time)?
 # + Implement basic testing
 # + Create readme, document, and make live on git 
