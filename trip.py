@@ -9,16 +9,11 @@ from pymongo.database import Database
 from pymongo.results import InsertOneResult
 import re
 import requests
-from typing import Optional
+from typing import List, Optional, Union
 
 # TODO - ITERATION 1:
 # + Add features:
 # ++ favouriting (allow adding columns with names of different users)
-# + Make automatic sizing nicer
-# + Using pipenv to download airbnb library
-# + Refactor code again:
-# ++ Maybe: Have separate listings collection and trip collection. Trip collection containing info on all the listings, which we read from listings collection.
-# ++ When to store in memory and when to read from db (take into account different users using same trip at same time)?
 # + Implement basic testing
 # + Create readme, document, and make live on git 
 
@@ -57,11 +52,18 @@ class Listing:
         '''
         self.raw_listing_json = Listing.get_raw_json(self)
         self.properties = Listing.get_properties_from_raw_json(self)
+
+
+    def populate_comments(self, comment_collection: Collection) -> None:
+        '''
+        Populates trip with listings data.
+        '''
+        self.comments = self.get_comments(comment_collection)
         
     
-    # def populate_listing(self) -> None:
-    #     self.populate_listing_properties
-    #     self.comments = Listing.get_comment(self.listing_id)
+    def populate_listing(self, comment_collection: Collection) -> None:
+        self.populate_listing_properties()
+        self.populate_comments(comment_collection)
 
 
     def write_to_db(self, listing_collection: Collection) -> InsertOneResult:
@@ -100,6 +102,14 @@ class Listing:
         return self.read_comments_from_db(self.listing_id, self.trip_id, comment_collection)
 
 
+    def get_listing_data(self, comment_collection: Collection, populate_listing:bool = True) -> dict:
+        if populate_listing:
+            self.populate_listing(comment_collection)
+        listing_data = self.properties
+        listing_data['comments'] = self.comments
+        return listing_data
+
+
     @classmethod
     def create_from_id(cls, listing_id: int, trip_id: str) -> Listing:
         url = f'https://www.airbnb.com/rooms/{listing_id}]'
@@ -107,7 +117,7 @@ class Listing:
 
 
     @classmethod
-    def create_from_url(cls, url, trip_id):
+    def create_from_url(cls, url: str, trip_id: str):
         # Strip query parameters, if there are any
         if '?' in url:
             url = url[:url.find('?')]  
@@ -116,7 +126,7 @@ class Listing:
 
 
     @classmethod
-    def create_from_db(cls, listing_id, trip_id, listing_collection: Collection, comment_collection: Collection):
+    def create_from_db(cls, listing_id: int, trip_id: str, listing_collection: Collection, comment_collection: Collection):
         assert isinstance(trip_id, str)
         
         listing_data = listing_collection.find_one({'listing_id': listing_id, 'trip_id': trip_id})
@@ -126,7 +136,7 @@ class Listing:
 
 
     @classmethod
-    def get_raw_json(cls, listing):
+    def get_raw_json(cls, listing: Listing):
         try:
             raw_listing_json = cls.api.get_listing_details(listing.listing_id)
             return raw_listing_json
@@ -136,7 +146,7 @@ class Listing:
 
 
     @classmethod
-    def get_properties_from_raw_json(cls, listing):
+    def get_properties_from_raw_json(cls, listing: Listing) -> json:
         pdp_listing_detail = listing.raw_listing_json['pdp_listing_detail']
         try:
             url = listing.url
@@ -173,7 +183,7 @@ class Listing:
     
 
     @staticmethod
-    def extract_id(url):
+    def extract_id(url: str) -> Union[int, None]:
         if url:
             re_groups = re.search('www.airbnb.com/rooms/([0-9]*).*', url)
             if re_groups:
@@ -182,7 +192,7 @@ class Listing:
             
 
     @staticmethod
-    def parse_beds(listing):
+    def parse_beds(listing: Listing) -> dict:
         rooms = listing.raw_listing_json['pdp_listing_detail']['listing_rooms']
         num_bed_types = {}
         if len(rooms) > 0:
@@ -204,7 +214,7 @@ class Listing:
 
 
     @staticmethod
-    def write_listing_from_url(url: str, trip_id: str, listing_collection: Collection) -> int:
+    def write_listing_from_url(url: str, trip_id: str, listing_collection: Collection) -> InsertOneResult:
         listing = Listing.create_from_url(url, trip_id)
         listing.populate_listing_properties()
         listing.write_to_db(listing_collection)
@@ -212,7 +222,7 @@ class Listing:
 
 class Trip:
     def __init__(self, trip_id: str, db: Database, 
-        all_listing_properties: pd.DataFrame = Optional[None]):
+        all_listing_properties: pd.DataFrame = Optional[None]) -> None:
 
         self.trip_id = trip_id
         self.listing_collection = db['listings']
@@ -224,13 +234,12 @@ class Trip:
         self.all_listing_properties = self.get_and_combine_all_listings(reparse_raw_json)
 
 
-    def get_and_combine_all_listings(self, reparse_raw_json: bool = True) -> list:
+    def get_and_combine_all_listings(self, reparse_raw_json: bool = True) -> List[dict]:
         all_listings = self.get_all_listings(reparse_raw_json)
         if all_listings and len(all_listings) > 0:
             all_listings_combined = []
             for listing in all_listings:
-                listing_data = listing.properties
-                listing_data['comments'] = listing.get_comments(self.comment_collection)
+                listing_data = listing.get_listing_data(self.comment_collection)
                 all_listings_combined.append(listing_data)
             return all_listings_combined
         else:
@@ -245,16 +254,16 @@ class Trip:
                 listing = Listing(listing_record['listing_id'], listing_record['url'], listing_record['trip_id'], 
                     listing_record['raw_listing_json'])
                 if reparse_raw_json:
-                    listing.populate_listing_properties()
+                    listing.populate_listing(self.comment_collection)
                 else:
                     listing.properties = listing_record['properties']
                 all_listings.append(listing)
             return all_listings
 
 
-    def get_listing(self, listing_id: int) -> json:
+    def get_listing(self, listing_id: int) -> dict:
         listing = Listing.create_from_id(listing_id, self.trip_id)
-        listing.populate_listing_properties()
+        listing.populate_listing()
         return listing
         
 

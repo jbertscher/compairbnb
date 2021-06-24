@@ -43,6 +43,15 @@ $( document ).ready(function() {
             return this.emptyToSpace(this.sanitizeHTML(cell.getValue()));
         };
         
+        //multiline text editor
+        var customTextareaEditor = function(cell, formatterParams, onRendered){
+            var editor = document.createElement("input")
+            editor.style.whiteSpace = "pre-wrap";
+            editor.style.overflow = "auto";
+            editor.style.maxHeight = "150px";
+            return editor;
+        };
+
         // Create Tabulator on DOM element with id "example-table"
         table = new Tabulator("#listings-table", {
             minHeight:220, // Set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
@@ -67,7 +76,13 @@ $( document ).ready(function() {
                 {title:"Guests", field:"guest_label"},
                 {title:"Location", field:"p3_summary_address", maxWidth: 125, formatter:"textarea"},
                 {title:"Rating", field:"localized_overall_rating"},
-                {title:"Comments", field:"comments", formatter:customTextareaFormatter, editor:"textarea"}// formatter:customTextareaFormatter, editor:"textarea"}
+                // {title:"Comments", field:"comments", formatter:customTextareaFormatter, editor:"textarea", editorParams:{
+                //     whiteSpace: "pre-wrap",
+                //     overflow: "auto",
+                //     maxHeight: "150px"
+                // }}customTextareaEditor
+                // {title:"Comments", field:"comments", formatter:customTextareaFormatter, editor:"textarea"}
+                {title:"Comments", field:"comments", formatter:customTextareaFormatter, editor:customTextareaEditor}
             ],
             cellEdited: function(cell){
                 cell_value = cell.getValue()

@@ -1,7 +1,9 @@
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+import json
+from flask import Flask, jsonify, redirect, render_template, Response, request, url_for
 import os
 from pymongo import MongoClient
 from trip import Trip
+from typing import Tuple, Union
 
 app = Flask(__name__)
 
@@ -11,7 +13,7 @@ db=client['compairbnb']
 
 
 @app.route('/submit_url/<trip_id>', methods=['POST'])
-def submit_url(trip_id):
+def submit_url(trip_id: str) -> Tuple(str, int):
     new_url = request.form.get('url')
     if new_url != '':
         Trip(trip_id, db).write_listing_from_url(new_url)
@@ -21,7 +23,7 @@ def submit_url(trip_id):
 
 
 @app.route('/api/<trip_id>', methods=['GET', 'POST'])
-def api(trip_id):
+def api(trip_id: str) -> Union[Response, Tuple[str, int]]:
     trip = Trip(trip_id, db)
     # GET request
     if request.method == 'GET':
@@ -38,7 +40,7 @@ def api(trip_id):
 
 
 @app.route('/<trip_id>')
-def home(trip_id):
+def home(trip_id: str) -> str:
     # all_listings = Trip(trip_id, listing_collection).get_and_combine_all_listings()
     return render_template('home.html', trip_id=trip_id)
 
