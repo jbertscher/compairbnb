@@ -14,6 +14,9 @@ from typing import List, Optional, Union
 # TODO - ITERATION 1:
 # + Add features:
 # ++ favouriting (allow adding columns with names of different users)
+# +++ Implement adding voter column (need collection to store votes)
+# +++ Implement delete voter column (use right click function)
+# ++ Ability to add and remove columns with menu function
 # + Implement basic testing
 # + Create readme, document, and make live on git 
 
@@ -267,15 +270,12 @@ class Trip:
         return listing
         
 
-    def delete_listing(self, listing_id: str, delete_from_cache: bool = True) -> None:
+    def delete_listing(self, listing_id: str) -> None:
         '''
-        Deletes a listing from the database and from cache by detault. Be careful deleting from cache when looping though all the listings
-        as this has side-effects. In that case, use delete_from_cache = False.
+        Deletes a listing from the database
         '''
         Listing.delete_listing(listing_id, self.trip_id, self.listing_collection)
-        # If results have been cached, remove from the DataFrame as well as DB
-        if self.all_listing_properties is not None and delete_from_cache:
-            self.all_listing_properties = self.all_listing_properties.loc[~listing_id]
+        self.populate_trip()
     
 
     def write_listing_from_url(self, url: str) -> None:

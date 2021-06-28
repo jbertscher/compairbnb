@@ -13,7 +13,7 @@ db=client['compairbnb']
 
 
 @app.route('/submit_url/<trip_id>', methods=['POST'])
-def submit_url(trip_id: str) -> Tuple(str, int):
+def submit_url(trip_id: str) -> Tuple[str, int]:
     new_url = request.form.get('url')
     if new_url != '':
         Trip(trip_id, db).write_listing_from_url(new_url)
