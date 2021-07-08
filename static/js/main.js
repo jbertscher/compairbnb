@@ -1,5 +1,7 @@
 $( document ).ready(function() {
 
+    var table;
+
     // Returns an array of the bed types and how they map to the values in the table data
     function extractBedTypesNums(tabledata) {
         var bedTypes = [];
@@ -26,7 +28,9 @@ $( document ).ready(function() {
             return response.json();
         }).then(function (json) {
             tabledata = json;
-            loadTable(tabledata)
+            table = loadTable(tabledata);
+            var voterName = 'Jonathan'
+            addVoterCol(table, voterName);
         });
 
     function loadTable(tabledata) {
@@ -167,7 +171,7 @@ $( document ).ready(function() {
         };
 
         // Create Tabulator on DOM element with id "example-table"
-        table = new Tabulator("#listings-table", {
+        var table = new Tabulator("#listings-table", {
             minHeight:220, // Set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
             data:tabledata, // Assign data to table
             layout:"fitData", // "fitColumns", // Fit columns to width of table (optional),
@@ -228,41 +232,24 @@ $( document ).ready(function() {
                 })
             }
         });
+        return table;
     };
 
-    function addCol(){ 
+    // Add a column for a voter
+    addVoterCol = function(table, voterName){ 
         table.addColumn({
-            formatter:"buttonCross", width:40, hozAlign:"center", 
-            cellClick:function(e, cell) {
-                cell.get().delete();
-                // POST
-                fetch('/api/' + trip_id, {
-
-                    // Declare what type of data we're sending
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-
-                    // Specify the method
-                    method: 'POST',
-
-                    // A JSON payload
-                    body: JSON.stringify({
-                        "action": "delete_listing",
-                        "listing_id": cell.getRow().getData().listing_id
-                    })
-                }).then(function (response) { // At this point, Flask has printed our JSON
-                    return response.text();
-                }).then(function (text) {
-
-                    console.log('POST response: ');
-
-                    // Should be 'OK' if everything was successful
-                    console.log(text);
-                });
+            title: voterName, field:"stars", formatter:"star", editor:"star",editorParams:{ 
+                elementAttributes:{
+                    maxlength:40
+                }
             }
-        }, true);
+        });
     };
+
+    // document.body.addEventListener('click', function(){
+    //     // console.log(table)
+    //     addVoterCol(table);
+    // }, true); 
     
     // This gets executed when a new listing is submitted
     // It clears the text box and reloads the table
@@ -277,11 +264,33 @@ $( document ).ready(function() {
                     .then(function (response) {
                         return response.json();
                     }).then(function (json) {
-                        loadTable(json);
+                        table = loadTable(json);
                     });
             },
             complete:function(){
                 $('#urlInput').val('');
+            }
+        });
+    });
+
+    // This gets executed when a new voter is submitted
+    // It clears the text box and reloads the table
+    $('#submitVoterName').submit(function(e){
+        e.preventDefault();
+        $.ajax({
+            url: '/submit_voter/' + trip_id,
+            type: 'post',
+            data:$('#submitVoterName').serialize(),
+            success:function(){
+                fetch('/api/' + trip_id)
+                    .then(function (response) {
+                        return response.json();
+                    }).then(function (json) {
+                        table = loadTable(json);
+                    });
+            },
+            complete:function(){
+                $('#voterNameInput').val('');
             }
         });
     });

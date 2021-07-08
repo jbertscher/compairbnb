@@ -22,6 +22,16 @@ def submit_url(trip_id: str) -> Tuple[str, int]:
         return 'ERROR', 204
 
 
+@app.route('/submit_voter/<trip_id>', methods=['POST'])
+def submit_voter(trip_id: str) -> Tuple[str, int]:
+    voter = request.form.get('voterName')
+    if voter != '':
+        # Add voter to DB
+        return 'OK', 200
+    else:
+        return 'ERROR', 204
+
+
 @app.route('/api/<trip_id>', methods=['GET', 'POST'])
 def api(trip_id: str) -> Union[Response, Tuple[str, int]]:
     trip = Trip(trip_id, db)
