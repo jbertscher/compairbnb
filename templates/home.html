@@ -5,13 +5,14 @@ Home
 {% block content %}
 <form action = "/submit_url/{{ trip_id }}", id="submitUrl">
     <p>
-        Enter listing URL: <input type = "text" name = "url" id="urlInput"/>
+        Add a listing by url: <input type = "text" name = "url" id="urlInput"/>
         <input type = "submit" value = "submit"/>
     </p>
 </form>
+<p></p>
 <form action = "/add_voter/{{ trip_id }}", id="addVoter">
     <p>
-        Enter listing URL: <input type = "text" name = "voterName" id="voterNameInput"/>
+        Add a user: <input type = "text" name = "voterName" id="voterNameInput"/>
         <input type = "submit" value = "submit"/>
     </p>
 </form>

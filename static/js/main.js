@@ -29,8 +29,8 @@ $( document ).ready(function() {
         }).then(function (json) {
             tabledata = json;
             table = loadTable(tabledata);
-            var voterName = 'Jonathan'
-            addVoterCol(table, voterName);
+            // var voterName = 'Jonathan'
+            // addVoterCol(table, voterName);
         });
 
     function loadTable(tabledata) {
@@ -46,15 +46,6 @@ $( document ).ready(function() {
             el.style.overflow = "auto";
             el.style.maxHeight = "150px";
             return this.emptyToSpace(this.sanitizeHTML(cell.getValue()));
-        };
-        
-        //multiline text editor
-        var customTextareaEditor = function(cell, formatterParams, onRendered){
-            var editor = document.createElement("input")
-            editor.style.whiteSpace = "pre-wrap";
-            editor.style.overflow = "auto";
-            editor.style.maxHeight = "150px";
-            return editor;
         };
 
         // This column contains x's that, when clicked, delete listings from the trip
@@ -197,13 +188,12 @@ $( document ).ready(function() {
                 {title:"Guests", field:"guest_label"},
                 {title:"Location", field:"p3_summary_address", maxWidth: 125, formatter:"textarea"},
                 {title:"Rating", field:"localized_overall_rating"},
-                // {title:"Comments", field:"comments", formatter:customTextareaFormatter, editor:"textarea", editorParams:{
-                //     whiteSpace: "pre-wrap",
-                //     overflow: "auto",
-                //     maxHeight: "150px"
-                // }}customTextareaEditor
+                {title:"Comments", field:"comments", formatter:customTextareaFormatter, width: 300, editor:"textarea", editorParams:{
+                    whiteSpace: "pre-wrap",
+                    overflow: "auto",
+                    maxHeight: "150px"
+                }}
                 // {title:"Comments", field:"comments", formatter:customTextareaFormatter, editor:"textarea"}
-                {title:"Comments", field:"comments", formatter:customTextareaFormatter, editor:customTextareaEditor}
             ],
             cellEdited: function(cell){
                 cell_value = cell.getValue()
@@ -245,11 +235,6 @@ $( document ).ready(function() {
             }
         });
     };
-
-    // document.body.addEventListener('click', function(){
-    //     // console.log(table)
-    //     addVoterCol(table);
-    // }, true); 
     
     // This gets executed when a new listing is submitted
     // It clears the text box and reloads the table
@@ -274,23 +259,21 @@ $( document ).ready(function() {
     });
 
     // This gets executed when a new voter is submitted
-    // It clears the text box and reloads the table
-    $('#submitVoterName').submit(function(e){
+    // It clears the text box and adds the voter to the table
+    $('#addVoter').submit(function(e){
         e.preventDefault();
         $.ajax({
-            url: '/submit_voter/' + trip_id,
+            url: '/add_voter/' + trip_id,
             type: 'post',
-            data:$('#submitVoterName').serialize(),
+            data:$('#addVoter').serialize(),
             success:function(){
                 fetch('/api/' + trip_id)
                     .then(function (response) {
                         return response.json();
                     }).then(function (json) {
-                        table = loadTable(json);
+                        addVoterCol(table, $('#voterNameInput').val())
+                        $('#voterNameInput').val('')
                     });
-            },
-            complete:function(){
-                $('#voterNameInput').val('');
             }
         });
     });

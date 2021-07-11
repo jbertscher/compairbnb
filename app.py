@@ -22,11 +22,12 @@ def submit_url(trip_id: str) -> Tuple[str, int]:
         return 'ERROR', 204
 
 
-@app.route('/submit_voter/<trip_id>', methods=['POST'])
+@app.route('/add_voter/<trip_id>', methods=['POST'])
 def submit_voter(trip_id: str) -> Tuple[str, int]:
     voter = request.form.get('voterName')
     if voter != '':
         # Add voter to DB
+        print(voter)
         return 'OK', 200
     else:
         return 'ERROR', 204
@@ -36,7 +37,7 @@ def submit_voter(trip_id: str) -> Tuple[str, int]:
 def api(trip_id: str) -> Union[Response, Tuple[str, int]]:
     trip = Trip(trip_id, db)
     # GET request
-    if request.method == 'GET':
+    if request.method == 'GET': 
         response = trip.get_and_combine_all_listings()
         return jsonify(response)  # serialize and use JSON headers
     # POST request
