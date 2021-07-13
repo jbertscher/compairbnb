@@ -12,11 +12,13 @@ import requests
 from typing import List, Optional, Union
 
 # TODO - ITERATION 1:
+# + Get all comments and votes at once instead of individualy getting each one from each listing iteratively
 # + Add features:
 # ++ favouriting (allow adding columns with names of different users)
 # +++ Implement adding voter column (need collection to store votes)
 # +++ Implement delete voter column (use right click function)
 # ++ Ability to add and remove columns with menu function
+# + Look into why get_and_combine_all_listings() takes so long now and see if speed can be improved (is it because now looking at comments db as well?)
 # + Implement basic testing
 # + Create readme, document, and make live on git 
 
@@ -103,6 +105,28 @@ class Listing:
 
     def get_comments(self, comment_collection: Collection) -> str:
         return self.read_comments_from_db(self.listing_id, self.trip_id, comment_collection)
+
+
+    def add_vote(self, user: str, points: int, votes_collection: Collection) -> None:
+        votes_collection.update_one(
+            {
+                'listing_id': self.listing_id, 
+                'trip_id': self.trip_id,
+                'user': user
+            }, 
+            {
+                '$set': {'points': points}
+            },
+            upsert=True
+        )
+
+
+    def get_all_votes(self, votes_collection: Collection) -> str:
+        votes = votes_collection.find({'trip_id': self.trip_id}, {'listing_id', 'user', 'points'})
+        if votes:
+            return votes
+        else:
+            return ''
 
 
     def get_listing_data(self, comment_collection: Collection, populate_listing:bool = True) -> dict:
@@ -230,6 +254,7 @@ class Trip:
         self.trip_id = trip_id
         self.listing_collection = db['listings']
         self.comment_collection = db['comment']
+        self.vote_collection = db['vote']
         self.all_listing_properties = all_listing_properties
 
 
@@ -290,6 +315,14 @@ class Trip:
 
     def get_comments(self, listing_id: int) -> str:
         return Listing.create_from_id(listing_id, self.trip_id).get_comments(self.comment_collection)
+
+
+    def add_vote(self, listing_id: str, user: str, points: int) -> None:
+        Listing.create_from_id(listing_id, self.trip_id).add_vote(user, points, self.vote_collection)
+
+
+    def get_all_votes(self, listing_id: int) -> int:
+        return Listing.create_from_id(listing_id, self.trip_id).get_all_votes(self.vote_collection)
 
 
     @staticmethod
