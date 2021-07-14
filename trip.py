@@ -12,7 +12,6 @@ import requests
 from typing import List, Optional, Union
 
 # TODO - ITERATION 1:
-# + Make singe collection
 # + Add features:
 # ++ favouriting (allow adding columns with names of different users)
 # +++ Implement adding voter column (need collection to store votes)
@@ -39,7 +38,7 @@ class Listing:
 
 
     def __init__(self, listing_id: int, url: str, trip_id: str, raw_listing_json: str = Optional[None], 
-        properties: str = Optional[None], comments: str = Optional[None]) -> None:
+        properties: str = Optional[None], comments: str = Optional[None], votes: str = Optional[None]) -> None:
         
         assert isinstance(listing_id, int), 'listing_id must be Integer'
         assert isinstance(trip_id, str), 'trip_id must be String'
@@ -50,26 +49,15 @@ class Listing:
         self.raw_listing_json = raw_listing_json
         self.properties = properties
         self.comments = comments
+        self.votes = votes
 
 
     def populate_listing_properties(self) -> None:
-        '''
-        Populates trip with listings data.
-        '''
-        self.raw_listing_json = Listing.get_raw_json(self)
         self.properties = Listing.get_properties_from_raw_json(self)
 
 
-    # def populate_comments(self, comment_collection: Collection) -> None:
-    #     '''
-    #     Populates trip with listings data.
-    #     '''
-    #     self.comments = self.get_comments(comment_collection)
-        
-    
-    def populate_listing(self, comment_collection: Collection) -> None:
-        self.populate_listing_properties()
-        # self.populate_comments(comment_collection)
+    def populate_comments(self, listing_collection: Collection) -> None:
+        self.comments = self.get_comments(listing_collection)
 
 
     def write_to_db(self, listing_collection: Collection) -> InsertOneResult:
@@ -104,12 +92,8 @@ class Listing:
         )
 
 
-    # def get_comments(self, listing_collection: Collection) -> str:
-    #     return self.read_comments_from_db(self.listing_id, self.trip_id, listing_collection)
-
-
-    def add_vote(self, user: str, points: int, votes_collection: Collection) -> None:
-        votes_collection.update_one(
+    def add_vote(self, user: str, points: int, listing_collection: Collection) -> None:
+        listing_collection.update_one(
             {
                 'listing_id': self.listing_id, 
                 'trip_id': self.trip_id,
@@ -117,8 +101,7 @@ class Listing:
             {
                 '$set': {
                     'votes': {
-                        'user': user,
-                        'points': points 
+                        str(user): points
                     }
                 }
             },
@@ -126,19 +109,13 @@ class Listing:
         )
 
 
-    # def get_all_votes(self, votes_collection: Collection) -> str:
-    #     votes = votes_collection.find({'trip_id': self.trip_id}, {'listing_id', 'user', 'points'})
-    #     if votes:
-    #         return votes
-    #     else:
-    #         return ''
-
-
-    def get_listing_data(self, populate_listing:bool = True) -> dict:
-        if populate_listing:
-            self.populate_listing()
+    def get_listing_data(self, populate_listing_properties:bool = True) -> dict:
+        if populate_listing_properties:
+            self.populate_listing_properties()
+        # Return all the relevant listing data
         listing_data = self.properties
-        # listing_data['comments'] = self.comments
+        listing_data['comments'] = self.comments
+        listing_data['votes'] = self.votes
         return listing_data
 
 
@@ -162,9 +139,9 @@ class Listing:
         assert isinstance(trip_id, str)
         
         listing_data = listing_collection.find_one({'listing_id': listing_id, 'trip_id': trip_id})
-        # comments = Listing.read_comments_from_db(listing_id, trip_id)
         
-        return cls(listing_id, listing_data['url'], trip_id, listing_data['raw_listing_json'], listing_data['properties'])
+        return cls(listing_id, listing_data['url'], trip_id, listing_data['raw_listing_json'], listing_data['properties'], 
+            listing_data['comments'], listing_data['votes'])
 
 
     @classmethod
@@ -236,15 +213,6 @@ class Listing:
         return num_bed_types
 
 
-    # @staticmethod
-    # def read_comments_from_db(listing_id: int, trip_id: str, comment_collection: Collection) -> str:
-    #     comments = comment_collection.find_one({'listing_id': listing_id, 'trip_id': trip_id})
-    #     if comments:
-    #         return comments['comments']
-    #     else:
-    #         return ''
-
-
     @staticmethod
     def write_listing_from_url(url: str, trip_id: str, listing_collection: Collection) -> InsertOneResult:
         listing = Listing.create_from_url(url, trip_id)
@@ -258,8 +226,6 @@ class Trip:
 
         self.trip_id = trip_id
         self.listing_collection = db['listings']
-        self.comment_collection = db['comment']
-        self.vote_collection = db['vote']
         self.all_listing_properties = all_listing_properties
 
 
@@ -272,7 +238,7 @@ class Trip:
         if all_listings and len(all_listings) > 0:
             all_listings_combined = []
             for listing in all_listings:
-                listing_data = listing.get_listing_data(self.comment_collection)
+                listing_data = listing.get_listing_data()
                 all_listings_combined.append(listing_data)
             return all_listings_combined
         else:
@@ -285,11 +251,9 @@ class Trip:
             all_listings = []
             for listing_record in all_listing_records:
                 listing = Listing(listing_record['listing_id'], listing_record['url'], listing_record['trip_id'], 
-                    listing_record['raw_listing_json'])
+                    listing_record['raw_listing_json'], listing_record.get('properties'), listing_record.get('comments'), listing_record.get('votes'))
                 if reparse_raw_json:
-                    listing.populate_listing(self.comment_collection)
-                else:
-                    listing.properties = listing_record['properties']
+                    listing.populate_listing_properties()
                 all_listings.append(listing)
             return all_listings
 
@@ -315,19 +279,11 @@ class Trip:
 
     
     def add_comments(self, listing_id: str, comments: str) -> None:
-        Listing.create_from_id(listing_id, self.trip_id).add_comments(comments, self.comment_collection)
-
-
-    # def get_comments(self, listing_id: int) -> str:
-    #     return Listing.create_from_id(listing_id, self.trip_id).get_comments(self.comment_collection)
+        Listing.create_from_id(listing_id, self.trip_id).add_comments(comments, self.listing_collection)
 
 
     def add_vote(self, listing_id: str, user: str, points: int) -> None:
-        Listing.create_from_id(listing_id, self.trip_id).add_vote(user, points, self.vote_collection)
-
-
-    # def get_all_votes(self, listing_id: int) -> int:
-    #     return Listing.create_from_id(listing_id, self.trip_id).get_all_votes(self.vote_collection)
+        Listing.create_from_id(listing_id, self.trip_id).add_vote(user, points, self.listing_collection)
 
 
     @staticmethod
