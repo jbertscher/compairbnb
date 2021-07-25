@@ -23,14 +23,40 @@ $( document ).ready(function() {
         return bedTypeCols
     }
 
+    // Returns an array of the voters and how they map to the values in the table data
+    function extractVotes(tabledata) {
+        var voters = [];
+        var votersCols = [];
+
+        // Loop through each listing
+        for(var i=0; i<tabledata.length; i++) {
+            listing_i = tabledata[i].votes
+            if (listing_i) { // Only execute below if there are votes for this property
+                // For each voter in the voters key, will add the voter to the array if they don't exist
+                Object.keys(listing_i).forEach(voter => {
+                    if (!voters.includes(voter)) {
+                        voters.push(voter)
+                        votersCols.push({'title': voter,'field': 'votes.' + voter, 'formatter':"star", 'editor':"star", 
+                        'editorParams':{ 
+                            elementAttributes:{
+                                maxlength:40
+                            }
+                        }});
+                    }
+                });
+            ;}
+        };
+
+        // Returns bed type columns and key for their respective values
+        return votersCols
+    }
+
     fetch('/api/' + trip_id)
         .then(function (response) {
             return response.json();
         }).then(function (json) {
             tabledata = json;
             table = loadTable(tabledata);
-            // var voterName = 'Jonathan'
-            // addVoterCol(table, voterName);
         });
 
     function loadTable(tabledata) {
@@ -38,6 +64,8 @@ $( document ).ready(function() {
         console.log(tabledata); 
 
         bedTypeCols = extractBedTypesNums(tabledata);
+        votersCols = extractVotes(tabledata);
+        console.log(votersCols);
 
         //multiline text area
         var customTextareaFormatter = function(cell, formatterParams, onRendered){
@@ -161,11 +189,11 @@ $( document ).ready(function() {
         return menu;
         };
 
-        // Create Tabulator on DOM element with id "example-table"
+        // Create Tabulator on DOM element with id "listings-table"
         var table = new Tabulator("#listings-table", {
-            minHeight:220, // Set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
-            data:tabledata, // Assign data to table
-            layout:"fitData", // "fitColumns", // Fit columns to width of table (optional),
+            minHeight: 220, // Set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+            data: tabledata,
+            layout: "fitData",
             rowContextMenu: rowMenu, //add context menu to rows,
             columns:[ // Define Table Columns
                 listingDeletionCol,
@@ -179,11 +207,7 @@ $( document ).ready(function() {
                 }},
                 {title:"Title", field:"p3_summary_title", maxWidth: 200, formatter:"textarea", frozen:true},
                 {title:"Bedrooms", field:"bedroom_label"},
-                // Grouped columns
-                {
-                    title:"Beds", 
-                    columns: bedTypeCols
-                },
+                {title:"Beds", columns: bedTypeCols},   // Bed types grouped columns
                 {title:"Bathrooms", field:"bathroom_label"},
                 {title:"Guests", field:"guest_label"},
                 {title:"Location", field:"p3_summary_address", maxWidth: 125, formatter:"textarea"},
@@ -192,11 +216,14 @@ $( document ).ready(function() {
                     whiteSpace: "pre-wrap",
                     overflow: "auto",
                     maxHeight: "150px"
-                }}
+                }},
                 // {title:"Comments", field:"comments", formatter:customTextareaFormatter, editor:"textarea"}
+                {title:"Preferences", columns: votersCols} // Voter grouped columns
             ],
             cellEdited: function(cell){
                 cell_value = cell.getValue()
+                console.log(cell.getColumn().getDefinition().title)
+                console.log(cell)
                 fetch('/api/' + trip_id, {
 
                     headers: {
