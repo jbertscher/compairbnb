@@ -221,11 +221,22 @@ $( document ).ready(function() {
                 {title:"Preferences", columns: votersCols} // Voter grouped columns
             ],
             cellEdited: function(cell){
-                cell_value = cell.getValue()
-                console.log(cell.getColumn().getDefinition().title)
-                console.log(cell)
+                var column;
+                switch (cell.getColumn().getDefinition().title) {
+                    case 'Comments':
+                        column = 'comments';
+                        value = cell.getValue()
+                        break;
+                     default:
+                        column = 'preferences';
+                        value = {
+                            'user': cell.getColumn().getDefinition().title,
+                            'points': cell.getValue()
+                        };
+                        break;
+                }
+                
                 fetch('/api/' + trip_id, {
-
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -233,9 +244,10 @@ $( document ).ready(function() {
                     method: 'POST',
 
                     body: JSON.stringify({
-                        "action": "add_comments",
+                        "action": "update_data",
+                        "field": column,
                         "listing_id": cell.getRow().getData().listing_id,
-                        "comments": cell_value
+                        "value": value
                     })
 
                 }).then(function (response) {

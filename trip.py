@@ -98,11 +98,18 @@ class Listing:
                 'listing_id': self.listing_id, 
                 'trip_id': self.trip_id,
             }, 
+            # {
+            #     '$set': {
+            #         'votes': {
+            #             str(user): points
+            #         }
+            #     }
+            # },
             {
                 '$set': {
-                    'votes': {
-                        str(user): points
-                    }
+                    f'votes.{str(user)}': 
+                        points
+                    
                 }
             },
             upsert=True

@@ -21,13 +21,12 @@ def submit_url(trip_id: str) -> Tuple[str, int]:
     else:
         return 'ERROR', 204
 
-
+# TODO: Delete this eventually. Don't think this is necessary because user will be written on vote. If no vote, user won't be saved but that's fine.
 @app.route('/add_voter/<trip_id>', methods=['POST'])
 def submit_voter(trip_id: str) -> Tuple[str, int]:
     voter = request.form.get('voterName')
     if voter != '':
         # Add voter to DB
-        print(voter)
         return 'OK', 200
     else:
         return 'ERROR', 204
@@ -45,8 +44,11 @@ def api(trip_id: str) -> Union[Response, Tuple[str, int]]:
         post = request.get_json()
         if post['action'] == 'delete_listing':
             trip.delete_listing(post['listing_id'])
-        elif post['action'] == 'add_comments':
-            trip.add_comments(post['listing_id'], post['comments'])
+        elif post['action'] == 'update_data':
+            if post['field'] == 'comments':
+                trip.add_comments(post['listing_id'], post['value'])
+            elif post['field'] == 'preferences':
+                trip.add_vote(post['listing_id'], post['value']['user'], post['value']['points'])
         return 'OK', 200
 
 
