@@ -36,7 +36,7 @@ $( document ).ready(function() {
                 Object.keys(listing_i).forEach(voter => {
                     if (!voters.includes(voter)) {
                         voters.push(voter)
-                        votersCols.push({'title': voter,'field': 'votes.' + voter, 'formatter':"star", 'editor':"star", 
+                        votersCols.push({'title': voter,'field': 'votes.' + voter, 'formatter':'star', 'editor':'star', 'headerMenu':userHeaderMenu,
                         'editorParams':{ 
                             elementAttributes:{
                                 maxlength:40
@@ -58,6 +58,36 @@ $( document ).ready(function() {
             tabledata = json;
             table = loadTable(tabledata);
         });
+
+    // Define column header to delete users from preferences parent column
+    var userHeaderMenu = [
+        {
+            label:"Delete Column",
+            action:function(e, column) {
+                column.delete(column.getDefinition().title)
+                fetch('/api/' + trip_id, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+
+                    method: 'POST',
+
+                    body: JSON.stringify({
+                        "action": "delete_user",
+                        "user": column.getDefinition().title
+                    })
+            
+                }).then(function(response){
+                    return response.text();
+                }).then(function(text){
+                    console.log('POST response: ');
+
+                    // Should be 'OK' if everything was successful
+                    console.log(text);
+                });
+            }
+        }
+    ]
 
     function loadTable(tabledata) {
         console.log('Table data:');
@@ -108,40 +138,6 @@ $( document ).ready(function() {
                 });
             }
         }
-
-        //define row context menu contents
-        var rowMenu = [
-            {
-                label:"<i class='fas fa-user'></i> Change Name",
-                action:function(e, row){
-                    row.update({name:"Steve Bobberson"});
-                }
-            },
-            {
-                label:"<i class='fas fa-check-square'></i> Select Row",
-                action:function(e, row){
-                    row.select();
-                }
-            },
-            {
-                separator:true,
-            },
-            {
-                label:"Admin Functions",
-                menu:[
-                    {
-                        label:"<i class='fas fa-trash'></i> Delete Row",
-                        action:function(e, row){
-                            row.delete();
-                        }
-                    },
-                    {
-                        label:"<i class='fas fa-ban'></i> Disabled Option",
-                        disabled:true,
-                    },
-                ]
-            }
-        ]
 
         //define column header menu as column visibility toggle
         var headerMenu = function(){
@@ -194,7 +190,6 @@ $( document ).ready(function() {
             minHeight: 220, // Set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
             data: tabledata,
             layout: "fitData",
-            rowContextMenu: rowMenu, //add context menu to rows,
             columns:[ // Define Table Columns
                 listingDeletionCol,
                 {title:"Click image to visit URL", field:"image", formatter:"image", 
@@ -267,7 +262,7 @@ $( document ).ready(function() {
     // Add a column for a voter
     addVoterCol = function(table, voterName){ 
         table.addColumn({
-            title: voterName, field:"stars", formatter:"star", editor:"star",editorParams:{ 
+            title: voterName, field:"stars", formatter:"star", editor:"star", headerMenu:userHeaderMenu, editorParams:{ 
                 elementAttributes:{
                     maxlength:40
                 }

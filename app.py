@@ -44,6 +44,8 @@ def api(trip_id: str) -> Union[Response, Tuple[str, int]]:
         post = request.get_json()
         if post['action'] == 'delete_listing':
             trip.delete_listing(post['listing_id'])
+        elif post['action'] == 'delete_user':
+            trip.delete_voter(post['user'])
         elif post['action'] == 'update_data':
             if post['field'] == 'comments':
                 trip.add_comments(post['listing_id'], post['value'])

@@ -13,11 +13,7 @@ from typing import List, Optional, Union
 
 # TODO - ITERATION 1:
 # + Add features:
-# ++ favouriting (allow adding columns with names of different users)
-# +++ Implement adding voter column (need collection to store votes)
-# +++ Implement delete voter column (use right click function)
 # ++ Ability to add and remove columns with menu function
-# + Look into why get_and_combine_all_listings() takes so long now and see if speed can be improved (is it because now looking at comments db as well?)
 # + Implement basic testing
 # + Create readme, document, and make live on git 
 
@@ -98,13 +94,6 @@ class Listing:
                 'listing_id': self.listing_id, 
                 'trip_id': self.trip_id,
             }, 
-            # {
-            #     '$set': {
-            #         'votes': {
-            #             str(user): points
-            #         }
-            #     }
-            # },
             {
                 '$set': {
                     f'votes.{str(user)}': 
@@ -291,6 +280,20 @@ class Trip:
 
     def add_vote(self, listing_id: str, user: str, points: int) -> None:
         Listing.create_from_id(listing_id, self.trip_id).add_vote(user, points, self.listing_collection)
+
+
+    def delete_voter(self, user) -> None:
+        self.listing_collection.update_many(
+            {
+                'trip_id': self.trip_id
+            },             
+            {
+            '$unset': {
+                   f'votes.{str(user)}': ""
+                }
+            },
+            upsert=True
+        )
 
 
     @staticmethod
