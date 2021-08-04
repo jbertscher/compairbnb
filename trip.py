@@ -12,7 +12,6 @@ import requests
 from typing import List, Optional, Union
 
 # TODO - ITERATION 1:
-# + Fix up Javascript variable names and formatting of code
 # + Implement basic testing
 # + Create readme, document, and make live on git 
 
