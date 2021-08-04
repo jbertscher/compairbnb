@@ -27,7 +27,8 @@ from typing import List, Optional, Union
 # + Chrome extension for adding properties
 
 
-AIRBNB_API_KEY = os.environ['AIRBNB_API_KEY']
+# AIRBNB_API_KEY = os.environ['AIRBNB_API_KEY']
+AIRBNB_API_KEY = 'd306zoyjsyarp7ifhu67rjxn52tv0t20'
 
 
 class Listing:
