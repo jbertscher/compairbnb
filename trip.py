@@ -12,15 +12,17 @@ import requests
 from typing import List, Optional, Union
 
 # TODO - ITERATION 1:
-# + Add features:
-# ++ Ability to add and remove columns with menu function
+# + Fix up column header names
 # + Implement basic testing
 # + Create readme, document, and make live on git 
 
 # TODO - ITERATION 2:
+# + Improve look of header context menu for toggling columns (format and check-box)
 # + Improve performance by reading all data at once instead of iterating through listings
+# + Allow addition of all available columns to table
+# ++ Using column header menu
+# ++ Using checkbox
 # + Add price: requires calling a different API endpoint: https://www.airbnb.com/api/v3/StaysPdpSections but this isn't implemented in the airbnb library that I'm using
-# + Add commenting for multiple users
 # + Homepage for generating trips
 # + Ability to add users based (allowing login, maybe using Google account)
 # + Chrome extension for adding properties
@@ -49,6 +51,7 @@ class Listing:
 
 
     def populate_listing_properties(self) -> None:
+        self.raw_listing_json = Listing.get_raw_json(self)
         self.properties = Listing.get_properties_from_raw_json(self)
 
 
@@ -159,7 +162,7 @@ class Listing:
             url = ''
 
         # Accounts for edge case where there are no reviews
-        if len(listing.raw_listing_json['pdp_listing_detail']['reviews_module'])==0:
+        if 'localized_overall_rating' not in listing.raw_listing_json['pdp_listing_detail']['reviews_module'].keys():
             localized_overall_rating = "No ratings yet"
         else:
             localized_overall_rating = listing.raw_listing_json['pdp_listing_detail']['reviews_module']['localized_overall_rating']

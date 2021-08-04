@@ -108,7 +108,7 @@ $( document ).ready(function() {
 
         // This column contains x's that, when clicked, delete listings from the trip
         var listingDeletionCol = {
-            formatter:"buttonCross", width:40, hozAlign:"center", frozen:true, 
+            field:'deleteListing', formatter:"buttonCross", width:40, hozAlign:"center", frozen:true, 
             cellClick:function(e, cell) {
                 cell.getRow().delete();
                 // POST
@@ -145,41 +145,44 @@ $( document ).ready(function() {
             var columns = this.getColumns();
 
             for(let column of columns){
+                console.log(column.getDefinition().field)
+                if(!['image', 'deleteListing'].includes(column.getDefinition().field)){
 
-                //create checkbox element using font awesome icons
-                let icon = document.createElement("i");
-                icon.classList.add("fas");
-                icon.classList.add(column.isVisible() ? "fa-check-square" : "fa-square");
+                    //create checkbox element using font awesome icons
+                    let icon = document.createElement("i");
+                    icon.classList.add("fas");
+                    icon.classList.add(column.isVisible() ? "fa-check-square" : "fa-square");
 
-                //build label
-                let label = document.createElement("span");
-                let title = document.createElement("span");
+                    //build label
+                    let label = document.createElement("span");
+                    let title = document.createElement("span");
 
-                title.textContent = " " + column.getDefinition().title;
+                    title.textContent = " " + column.getDefinition().title;
 
-                label.appendChild(icon);
-                label.appendChild(title);
+                    label.appendChild(icon);
+                    label.appendChild(title);
 
-                //create menu item
-                menu.push({
-                    label:label,
-                    action:function(e){
-                        //prevent menu closing
-                        e.stopPropagation();
+                    //create menu item
+                    menu.push({
+                        label:label,
+                        action:function(e){
+                            //prevent menu closing
+                            e.stopPropagation();
 
-                        //toggle current column visibility
-                        column.toggle();
+                            //toggle current column visibility
+                            column.toggle();
 
-                        //change menu item icon
-                        if(column.isVisible()){
-                            icon.classList.remove("fa-square");
-                            icon.classList.add("fa-check-square");
-                        }else{
-                            icon.classList.remove("fa-check-square");
-                            icon.classList.add("fa-square");
+                            //change menu item icon
+                            if(column.isVisible()){
+                                icon.classList.remove("fa-square");
+                                icon.classList.add("fa-check-square");
+                            }else{
+                                icon.classList.remove("fa-check-square");
+                                icon.classList.add("fa-square");
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
 
         return menu;
