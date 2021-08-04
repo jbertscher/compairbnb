@@ -10,17 +10,18 @@ $( document ).ready(function() {
         // Loop through each listing
         for(var i=0; i<tabledata.length; i++) {
             listing_i = tabledata[i].num_bed_types
-            // For each bed type in the bed_type key, will add the bed type to the array if it doesn't exist
-            Object.keys(listing_i).forEach(bed_type => {
-                if (!bedTypes.includes(bed_type)) {
-                    bedTypes.push(bed_type)
-                    bedTypeCols.push({'title': bed_type,'field': 'num_bed_types.' + bed_type});
+            // For each bed type in the BedType key, will add the bed type to the array if it doesn't exist
+            Object.keys(listing_i).forEach(BedType => {
+                if (!bedTypes.includes(BedType)) {
+                    bedTypes.push(BedType)
+                    bedTypeTormatted = BedType.replace('_', ' ').replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
+                    bedTypeCols.push({'title': bedTypeTormatted, 'field': 'num_bed_types.' + BedType});
                 }
             });
         };
 
         // Returns bed type columns and key for their respective values
-        return bedTypeCols
+        return bedTypeCols;
     }
 
     // Returns an array of the voters and how they map to the values in the table data
@@ -30,12 +31,12 @@ $( document ).ready(function() {
 
         // Loop through each listing
         for(var i=0; i<tabledata.length; i++) {
-            listing_i = tabledata[i].votes
+            listing_i = tabledata[i].votes;
             if (listing_i) { // Only execute below if there are votes for this property
                 // For each voter in the voters key, will add the voter to the array if they don't exist
                 Object.keys(listing_i).forEach(voter => {
                     if (!voters.includes(voter)) {
-                        voters.push(voter)
+                        voters.push(voter);
                         votersCols.push({'title': voter,'field': 'votes.' + voter, 'formatter':'star', 'editor':'star', 'headerMenu':userHeaderMenu,
                         'editorParams':{ 
                             elementAttributes:{
@@ -44,11 +45,11 @@ $( document ).ready(function() {
                         }});
                     }
                 });
-            ;}
-        };
+            }
+        }
 
         // Returns bed type columns and key for their respective values
-        return votersCols
+        return votersCols;
     }
 
     fetch('/api/' + trip_id)
@@ -90,12 +91,8 @@ $( document ).ready(function() {
     ]
 
     function loadTable(tabledata) {
-        console.log('Table data:');
-        console.log(tabledata); 
-
         bedTypeCols = extractBedTypesNums(tabledata);
         votersCols = extractVotes(tabledata);
-        console.log(votersCols);
 
         //multiline text area
         var customTextareaFormatter = function(cell, formatterParams, onRendered){
@@ -140,7 +137,7 @@ $( document ).ready(function() {
         }
 
         //define column header menu as column visibility toggle
-        var headerMenu = function(){
+        var headerMenu = function() {
             var menu = [];
             var columns = this.getColumns();
 
@@ -263,7 +260,7 @@ $( document ).ready(function() {
     };
 
     // Add a column for a voter
-    addVoterCol = function(table, voterName){ 
+    addVoterCol = function(table, voterName) { 
         table.addColumn({
             title: voterName, field:"stars", formatter:"star", editor:"star", headerMenu:userHeaderMenu, editorParams:{ 
                 elementAttributes:{
@@ -275,7 +272,7 @@ $( document ).ready(function() {
     
     // This gets executed when a new listing is submitted
     // It clears the text box and reloads the table
-    $('#submitUrl').submit(function(e){
+    $('#submitUrl').submit(function(e) {
         e.preventDefault();
         $.ajax({
             url: '/submit_url/' + trip_id,
@@ -297,7 +294,7 @@ $( document ).ready(function() {
 
     // This gets executed when a new voter is submitted
     // It clears the text box and adds the voter to the table
-    $('#addVoter').submit(function(e){
+    $('#addVoter').submit(function(e) {
         e.preventDefault();
         $.ajax({
             url: '/add_voter/' + trip_id,
