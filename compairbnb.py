@@ -8,11 +8,13 @@ mongodb_uri = os.environ['MONGODB_URI']
 client = MongoClient(mongodb_uri)
 db=client['compairbnb']
 listing_collection = db['listings']
+# comment_collection = db['comment']
+# vote_collection = db['vote']
 
-trip = Trip('_test', listing_collection)
+trip = Trip('_test', db)
+# trip.add_comments(41723684, 'this is a new comment')
+# trip.populate_trip()
+trip.add_vote(41723684, 'Person', 5)
 trip.populate_trip()
-print(trip.all_listing_properties)
-for trip_id in trip.all_listing_properties.index:
-    trip.delete_listing(trip_id, delete_from_cache=False)
-trip.populate_trip()
-print(trip.all_listing_properties)
+print(trip)
+# print(trip.get_all_votes(41723684))
