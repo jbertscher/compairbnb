@@ -1,7 +1,7 @@
 from __future__ import annotations
 import os
 from socket import send_fds
-import airbnb  # https://github.com/nderkach/airbnb-python
+import airbnb
 import json
 import pandas as pd
 from pymongo.collection import Collection
@@ -11,23 +11,7 @@ import re
 import requests
 from typing import List, Optional, Union
 
-# TODO - ITERATION 1:
-# + Implement basic testing
-# + Create readme, document, and make live on git 
 
-# TODO - ITERATION 2:
-# + Improve look of header context menu for toggling columns (format and check-box)
-# + Improve performance by reading all data at once instead of iterating through listings
-# + Allow addition of all available columns to table
-# ++ Using column header menu
-# ++ Using checkbox
-# + Add price: requires calling a different API endpoint: https://www.airbnb.com/api/v3/StaysPdpSections but this isn't implemented in the airbnb library that I'm using
-# + Homepage for generating trips
-# + Ability to add users based (allowing login, maybe using Google account)
-# + Chrome extension for adding properties
-
-
-# AIRBNB_API_KEY = os.environ['AIRBNB_API_KEY']
 AIRBNB_API_KEY = 'd306zoyjsyarp7ifhu67rjxn52tv0t20'
 
 
@@ -53,10 +37,6 @@ class Listing:
     def populate_listing_properties(self) -> None:
         self.raw_listing_json = Listing.get_raw_json(self)
         self.properties = Listing.get_properties_from_raw_json(self)
-
-
-    def populate_comments(self, listing_collection: Collection) -> None:
-        self.comments = self.get_comments(listing_collection)
 
 
     def write_to_db(self, listing_collection: Collection) -> InsertOneResult:
@@ -178,7 +158,6 @@ class Listing:
             'bedroom_label': p.search(listing.raw_listing_json['pdp_listing_detail']['bedroom_label']).group(0),
             'guest_label': p.search(listing.raw_listing_json['pdp_listing_detail']['guest_label']).group(0),
             'num_bed_types': cls.parse_beds(listing),
-            'p3_summary_title': listing.raw_listing_json['pdp_listing_detail']['p3_summary_title'],
             'p3_summary_address': listing.raw_listing_json['pdp_listing_detail']['p3_summary_address'],
             'localized_overall_rating': localized_overall_rating
         }
@@ -255,12 +234,6 @@ class Trip:
                     listing.populate_listing_properties()
                 all_listings.append(listing)
             return all_listings
-
-
-    def get_listing(self, listing_id: int) -> dict:
-        listing = Listing.create_from_id(listing_id, self.trip_id)
-        listing.populate_listing()
-        return listing
         
 
     def delete_listing(self, listing_id: str) -> None:

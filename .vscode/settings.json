@@ -1,3 +1,6 @@
 {
-    "python.pythonPath": "/Users/jonathan/.local/share/virtualenvs/group-airbnb-jk8urJVB/bin/python"
+    "python.pythonPath": "/Users/jonathan/.local/share/virtualenvs/group-airbnb-jk8urJVB/bin/python",
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true
 }

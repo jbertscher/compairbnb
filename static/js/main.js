@@ -14,7 +14,7 @@ $( document ).ready(function() {
             Object.keys(listing_i).forEach(BedType => {
                 if (!bedTypes.includes(BedType)) {
                     bedTypes.push(BedType)
-                    bedTypeTormatted = BedType.replace('_', ' ').replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
+                    bedTypeTormatted = BedType.replace('_', ' ').replace(' bed', '').replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
                     bedTypeCols.push({'title': bedTypeTormatted, 'field': 'num_bed_types.' + BedType});
                 }
             });
@@ -297,9 +297,6 @@ $( document ).ready(function() {
     $('#addVoter').submit(function(e) {
         e.preventDefault();
         $.ajax({
-            url: '/add_voter/' + trip_id,
-            type: 'post',
-            data:$('#addVoter').serialize(),
             success:function(){
                 fetch('/api/' + trip_id)
                     .then(function (response) {

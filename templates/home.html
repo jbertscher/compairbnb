@@ -3,17 +3,17 @@
 Home
 {% endblock %}
 {% block content %}
-<form action = "/submit_url/{{ trip_id }}", id="submitUrl">
+<form action="/submit_url/{{ trip_id }}", id="submitUrl">
     <p>
-        Add a listing by url: <input type = "text" name = "url" id="urlInput"/>
-        <input type = "submit" value = "submit"/>
+        Add a listing by url: <input type="text" name="url" id="urlInput"/>
+        <input type="submit" value ="Submit"/>
     </p>
 </form>
 <hr>
-<form action = "/add_voter/{{ trip_id }}", id="addVoter">
+<form action="/add_voter/{{ trip_id }}", id="addVoter">
     <p>
-        Add a user to enable voting: <input type = "text" name = "voterName" id="voterNameInput"/>
-        <input type = "submit" value = "submit"/>
+        Add a user to enable voting: <input type="text" name="voterName" id="voterNameInput"/>
+        <input type="submit" value="Submit"/>
     </p>
 </form>
 <hr>
@@ -23,5 +23,5 @@ Home
 <script type=text/javascript src="{{ url_for('static', filename='lib/js/jquery-3.6.0.min.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='lib/js/tabulator/dist/js/tabulator.min.js') }}"></script>
 <script type="text/javascript"> var trip_id = "{{ trip_id }}" </script>
-<script type="text/javascript" src=" {{url_for('static', filename='js/main.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% endblock %}
