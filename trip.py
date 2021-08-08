@@ -1,6 +1,4 @@
 from __future__ import annotations
-import os
-from socket import send_fds
 import airbnb
 import json
 import pandas as pd
@@ -18,13 +16,13 @@ AIRBNB_API_KEY = 'd306zoyjsyarp7ifhu67rjxn52tv0t20'
 class Listing:
     api = airbnb.Api(api_key=AIRBNB_API_KEY, randomize=True)
 
-
-    def __init__(self, listing_id: int, url: str, trip_id: str, raw_listing_json: str = Optional[None], 
-        properties: str = Optional[None], comments: str = Optional[None], votes: str = Optional[None]) -> None:
-        
+    def __init__(self, listing_id: int, url: str, trip_id: str,
+                 raw_listing_json: str = Optional[None],
+                 properties: str = Optional[None],
+                 comments: str = Optional[None],
+                 votes: str = Optional[None]) -> None:
         assert isinstance(listing_id, int), 'listing_id must be Integer'
         assert isinstance(trip_id, str), 'trip_id must be String'
-        
         self.listing_id = listing_id
         self.url = url
         self.trip_id = trip_id
@@ -33,18 +31,17 @@ class Listing:
         self.comments = comments
         self.votes = votes
 
-
     def populate_listing_properties(self) -> None:
         self.raw_listing_json = Listing.get_raw_json(self)
         self.properties = Listing.get_properties_from_raw_json(self)
 
-
     def write_to_db(self, listing_collection: Collection) -> InsertOneResult:
         '''
         Writes Listing to DB. Returns the result retured by insert_one().
-        '''        
+        '''
         # Don't write if listing id already found for that trip
-        if not listing_collection.find_one({'listing_id' : self.listing_id, 'trip_id': self.trip_id}): 
+        if not listing_collection.find_one({'listing_id': self.listing_id,
+                                            'trip_id': self.trip_id}):
             if self.raw_listing_json:
                 result = listing_collection.insert_one(
                     {
@@ -57,38 +54,36 @@ class Listing:
                 )
                 return result
 
-
-    def add_comments(self, comments: str, listing_collection: Collection) -> None:
+    def add_comments(self, comments: str,
+                     listing_collection: Collection) -> None:
         listing_collection.update_one(
             {
-                'listing_id': self.listing_id, 
+                'listing_id': self.listing_id,
                 'trip_id': self.trip_id
-            }, 
+            },
             {
                 '$set': {'comments': comments}
             },
             upsert=True
         )
 
-
-    def add_vote(self, user: str, points: int, listing_collection: Collection) -> None:
+    def add_vote(self, user: str, points: int,
+                 listing_collection: Collection) -> None:
         listing_collection.update_one(
             {
-                'listing_id': self.listing_id, 
+                'listing_id': self.listing_id,
                 'trip_id': self.trip_id,
-            }, 
+            },
             {
                 '$set': {
-                    f'votes.{str(user)}': 
-                        points
-                    
+                    f'votes.{str(user)}': points
                 }
             },
             upsert=True
         )
 
-
-    def get_listing_data(self, populate_listing_properties:bool = True) -> dict:
+    def get_listing_data(self,
+                         populate_listing_properties: bool = True) -> dict:
         if populate_listing_properties:
             self.populate_listing_properties()
         # Return all the relevant listing data
@@ -97,31 +92,29 @@ class Listing:
         listing_data['votes'] = self.votes
         return listing_data
 
-
     @classmethod
     def create_from_id(cls, listing_id: int, trip_id: str) -> Listing:
         url = f'https://www.airbnb.com/rooms/{listing_id}]'
         return cls(listing_id, url, trip_id)
 
-
     @classmethod
     def create_from_url(cls, url: str, trip_id: str):
         # Strip query parameters, if there are any
         if '?' in url:
-            url = url[:url.find('?')]  
+            url = url[:url.find('?')]
         listing_id = int(cls.extract_id(url))
         return cls(listing_id, url, trip_id)
 
-
     @classmethod
-    def create_from_db(cls, listing_id: int, trip_id: str, listing_collection: Collection):
+    def create_from_db(cls, listing_id: int, trip_id: str,
+                       listing_collection: Collection):
         assert isinstance(trip_id, str)
-        
-        listing_data = listing_collection.find_one({'listing_id': listing_id, 'trip_id': trip_id})
-        
-        return cls(listing_id, listing_data['url'], trip_id, listing_data['raw_listing_json'], listing_data['properties'], 
-            listing_data['comments'], listing_data['votes'])
-
+        listing_data = listing_collection.find_one({'listing_id': listing_id,
+                                                    'trip_id': trip_id})
+        return cls(listing_id, listing_data['url'], trip_id,
+                   listing_data['raw_listing_json'],
+                   listing_data['properties'],
+                   listing_data['comments'], listing_data['votes'])
 
     @classmethod
     def get_raw_json(cls, listing: Listing):
@@ -129,9 +122,8 @@ class Listing:
             raw_listing_json = cls.api.get_listing_details(listing.listing_id)
             return raw_listing_json
         except requests.exceptions.HTTPError as error:
-            print (error)
+            print(error)
             return None
-
 
     @classmethod
     def get_properties_from_raw_json(cls, listing: Listing) -> json:
@@ -142,10 +134,15 @@ class Listing:
             url = ''
 
         # Accounts for edge case where there are no reviews
-        if 'localized_overall_rating' not in listing.raw_listing_json['pdp_listing_detail']['reviews_module'].keys():
+        if 'localized_overall_rating' not in (
+                listing.raw_listing_json['pdp_listing_detail']
+                                        ['reviews_module'].keys()):
             localized_overall_rating = "No ratings yet"
         else:
-            localized_overall_rating = listing.raw_listing_json['pdp_listing_detail']['reviews_module']['localized_overall_rating']
+            localized_overall_rating = (
+                listing.raw_listing_json['pdp_listing_detail']
+                                        ['reviews_module']
+                                        ['localized_overall_rating'])
 
         p = re.compile('^([0-9]*)')
         properties = {
@@ -161,13 +158,13 @@ class Listing:
             'p3_summary_address': listing.raw_listing_json['pdp_listing_detail']['p3_summary_address'],
             'localized_overall_rating': localized_overall_rating
         }
-        return properties     
-
+        return properties
 
     @staticmethod
-    def delete_listing(listing_id: int, trip_id: str, listing_collection: Collection) -> None:
-        listing_collection.delete_one({'trip_id': trip_id, 'listing_id': listing_id})
-    
+    def delete_listing(listing_id: int, trip_id: str,
+                       listing_collection: Collection) -> None:
+        listing_collection.delete_one({'trip_id': trip_id,
+                                       'listing_id': listing_id})
 
     @staticmethod
     def extract_id(url: str) -> Union[int, None]:
@@ -176,7 +173,6 @@ class Listing:
             if re_groups:
                 listing_id = re_groups.group(1)
                 return listing_id
-            
 
     @staticmethod
     def parse_beds(listing: Listing) -> dict:
@@ -190,7 +186,6 @@ class Listing:
                     num_bed_types[bed_type] = bed_quantity
         return num_bed_types
 
-
     @staticmethod
     def write_listing_from_url(url: str, trip_id: str, listing_collection: Collection) -> InsertOneResult:
         listing = Listing.create_from_url(url, trip_id)
@@ -199,19 +194,18 @@ class Listing:
 
 
 class Trip:
-    def __init__(self, trip_id: str, db: Database, 
-        all_listing_properties: pd.DataFrame = Optional[None]) -> None:
+    def __init__(self, trip_id: str, db: Database,
+                 all_listing_properties: pd.DataFrame = Optional[None]) -> None:
 
         self.trip_id = trip_id
         self.listing_collection = db['listings']
         self.all_listing_properties = all_listing_properties
 
-
     def populate_trip(self, reparse_raw_json: bool = True) -> None:
         self.all_listing_properties = self.get_and_combine_all_listings(reparse_raw_json)
 
-
-    def get_and_combine_all_listings(self, reparse_raw_json: bool = True) -> List[dict]:
+    def get_and_combine_all_listings(self,
+                                     reparse_raw_json: bool = True) -> List[dict]:
         all_listings = self.get_all_listings(reparse_raw_json)
         if all_listings and len(all_listings) > 0:
             all_listings_combined = []
@@ -222,60 +216,60 @@ class Trip:
         else:
             return []
 
-
     def get_all_listings(self, reparse_raw_json: bool = False) -> list[Listing]:
         all_listing_records = self.listing_collection.find({'trip_id': self.trip_id})
-        if all_listing_records.collection.count_documents({})>0:
+        if all_listing_records.collection.count_documents({}) > 0:
             all_listings = []
             for listing_record in all_listing_records:
-                listing = Listing(listing_record['listing_id'], listing_record['url'], listing_record['trip_id'], 
-                    listing_record['raw_listing_json'], listing_record.get('properties'), listing_record.get('comments'), listing_record.get('votes'))
+                listing = Listing(listing_record['listing_id'],
+                                  listing_record['url'],
+                                  listing_record['trip_id'],
+                                  listing_record['raw_listing_json'],
+                                  listing_record.get('properties'),
+                                  listing_record.get('comments'),
+                                  listing_record.get('votes'))
                 if reparse_raw_json:
                     listing.populate_listing_properties()
                 all_listings.append(listing)
             return all_listings
-        
 
     def delete_listing(self, listing_id: str) -> None:
         '''
         Deletes a listing from the database
         '''
-        Listing.delete_listing(listing_id, self.trip_id, self.listing_collection)
+        Listing.delete_listing(listing_id, self.trip_id,
+                               self.listing_collection)
         self.populate_trip()
-    
 
     def write_listing_from_url(self, url: str) -> None:
         listing = Listing.create_from_url(url, self.trip_id)
         listing.populate_listing_properties()
         listing.write_to_db(self.listing_collection)
 
-    
     def add_comments(self, listing_id: str, comments: str) -> None:
-        Listing.create_from_id(listing_id, self.trip_id).add_comments(comments, self.listing_collection)
-
+        Listing.create_from_id(listing_id, self.trip_id).add_comments(comments,
+                                                                      self.listing_collection)
 
     def add_vote(self, listing_id: str, user: str, points: int) -> None:
-        Listing.create_from_id(listing_id, self.trip_id).add_vote(user, points, self.listing_collection)
-
+        Listing.create_from_id(listing_id, self.trip_id).add_vote(user, points,
+                                                                  self.listing_collection)
 
     def delete_voter(self, user) -> None:
         self.listing_collection.update_many(
             {
                 'trip_id': self.trip_id
-            },             
+            },
             {
-            '$unset': {
-                   f'votes.{str(user)}': ""
+                '$unset': {
+                    f'votes.{str(user)}': ""
                 }
             },
             upsert=True
         )
 
-
     @staticmethod
     def combine_listings(listings: list[pd.DataFrame]) -> pd.DataFrame:
-        if len(listings)>0:
+        if len(listings) > 0:
             return pd.concat(listings, axis=0)
         else:
             return pd.DataFrame()
-
